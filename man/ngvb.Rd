@@ -25,6 +25,9 @@ non-Gaussianity (default: all random effects).}
 \item{components}{Optional named list of operator descriptors overriding
 auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).}
 
+\item{method}{Variational algorithm: `"SCVI"` (structured & collapsed, the default)
+or `"SVI"` (structured).}
+
 \item{alpha.eta}{Exponential-PC-prior rate(s) on the non-Gaussianity parameter(s).}
 
 \item{iter, stop.rel.change, n.sampling, verbose}{VB controls.}

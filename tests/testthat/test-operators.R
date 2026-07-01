@@ -36,6 +36,14 @@ test_that("SAR operator equals tau (I - rho W)^T (I - rho W)", {
   expect_equal(Q, tau * t(D) %*% D, tolerance = 1e-8, ignore_attr = TRUE)
 })
 
+test_that("OU operator equals the Ornstein-Uhlenbeck precision (irregular times)", {
+  set.seed(1); loc <- sort(runif(15, 0, 10)); tau <- 1.5; kappa <- 0.4
+  op <- ngvb_operator("ou", loc = loc)
+  Q  <- as.matrix(ngvb_precision(op, theta = c(log(tau), log(kappa)), V = op$h))
+  Sig <- (1 / tau) * exp(-kappa * abs(outer(loc, loc, "-")))   # OU covariance
+  expect_equal(Q, solve(Sig), tolerance = 1e-6, ignore_attr = TRUE)
+})
+
 test_that("h is 1 for discrete models and diag(C) for SPDE", {
   expect_true(all(ngvb_operator("ar1", n = 8)$h == 1))
   expect_true(all(ngvb_operator("rw1", n = 8)$h == 1))

@@ -2,6 +2,7 @@
 import(Matrix)
 importFrom(INLA, inla, inla.rgeneric.define, inla.spde2.matern)
 importFrom(methods, as)
+importFrom(utils, globalVariables)
 importFrom(stats, dnorm, optimize, runif, spline)
 export(ngvb)
 export(ng.check)

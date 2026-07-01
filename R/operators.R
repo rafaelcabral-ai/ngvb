@@ -29,8 +29,34 @@ ngvb_operator <- function(type, ...) {
     sar = op_sar(...),
     car = op_car(...),
     spde = op_spde(...),
+    ou  = op_ou(...),
     stop("ngvb2: operator type not implemented yet: ", type)
   )
+}
+
+## ---- Ornstein-Uhlenbeck: continuous-time AR1 for irregularly spaced times ---
+## dX = -kappa X dt + sigma dB; marginal precision tau, rho_i = exp(-kappa dt_i).
+## D is lower-bidiagonal with the exact transition-variance scaling, so D^T D is
+## the OU precision (marginal covariance (1/tau) exp(-kappa |t_i - t_j|)).
+## theta = (log tau, log kappa).
+
+op_ou <- function(loc, pc.prec = c(U = 1, alpha = 0.01)) {
+  loc <- sort(loc); n <- length(loc); dt <- diff(loc)
+  stopifnot(n >= 2, all(dt > 0))
+  lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
+  Dfunc <- function(theta) {
+    tau <- exp(theta[1L]); kappa <- exp(theta[2L])
+    rho <- exp(-kappa * dt)                       # length n-1
+    s   <- sqrt(tau / (1 - rho^2))                # transition scaling
+    Matrix::sparseMatrix(
+      i = c(1:n, 2:n), j = c(1:n, 1:(n - 1L)),
+      x = c(sqrt(tau), s, -rho * s), dims = c(n, n))
+  }
+  graph <- Matrix::bandSparse(n, n, k = c(-1L, 0L, 1L),
+                              diagonals = list(rep(1, n - 1L), rep(1, n), rep(1, n - 1L)))
+  logprior <- function(theta) lp(theta[1L]) + stats::dnorm(theta[2L], 0, 3, log = TRUE)
+  list(type = "ou", n = n, ntheta = 2L, rankdef = 0L, h = rep(1, n),
+       theta.initial = c(1, 0), Dfunc = Dfunc, graph = graph, logprior = logprior)
 }
 
 ## ---- SPDE / Matern (alpha = 2):  D = kappa^2 C + G  (C, G = FEM mass, stiffness)

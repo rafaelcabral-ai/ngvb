@@ -112,6 +112,8 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SCVI", "SVI"),
 #'   non-Gaussianity (default: all random effects).
 #' @param components Optional named list of operator descriptors overriding
 #'   auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).
+#' @param method Variational algorithm: `"SCVI"` (structured & collapsed, the default)
+#'   or `"SVI"` (structured).
 #' @param alpha.eta Exponential-PC-prior rate(s) on the non-Gaussianity parameter(s).
 #' @param iter,stop.rel.change,n.sampling,verbose VB controls.
 #' @return A list with the final `fit`, mixing vectors `V`, `eta`, etc.
