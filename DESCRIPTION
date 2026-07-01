@@ -1,0 +1,37 @@
+Package: ngvb2
+Type: Package
+Title: Latent Non-Gaussian Models via INLA and Variational Bayes (v2)
+Version: 0.0.0.9000
+Authors@R: person("Rafael", "Cabral", email = "rafael.medeiros.cabral@gmail.com",
+    role = c("aut", "cre"))
+Description: Rebuild of the 'ngvb' package. Checks the latent Gaussian assumption
+    (ng.check) and fits latent non-Gaussian models (ngvb) on top of R-INLA using a
+    variational Bayes algorithm. A single unified rgeneric/cgeneric engine implements the
+    conditional precision Q(theta, V) = D(theta)^T diag(1/V) D(theta) and owns the
+    V-dependent normalizing constant, and a model registry covers iid, rw1, rw2, ar1,
+    ar(p), Ornstein-Uhlenbeck, CAR/besag, SAR and SPDE/Matern models.
+License: GPL (>= 3)
+Encoding: UTF-8
+Depends:
+    R (>= 4.1),
+    INLA
+Imports:
+    Matrix,
+    methods,
+    stats,
+    graphics,
+    utils,
+    GIGrvg
+Suggests:
+    testthat (>= 3.0.0),
+    ngme2,
+    fmesher,
+    sf,
+    spData,
+    spdep,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Roxygen: list(roclets = c("rd"))
+RoxygenNote: 7.3.3

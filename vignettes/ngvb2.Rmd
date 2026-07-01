@@ -1,0 +1,91 @@
+---
+title: "Getting started with ngvb2"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with ngvb2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      eval = requireNamespace("INLA", quietly = TRUE))
+```
+
+`ngvb2` extends a latent **Gaussian** model fitted with R-INLA to a latent
+**non-Gaussian** model. The Gaussian field has precision $\mathbf{Q}=\mathbf{D}^\top\mathbf{D}$
+for a model-specific dependency matrix $\mathbf{D}$; the non-Gaussian version conditions on
+mixing variables $\mathbf{V}$,
+$$\mathbf{Q}(\boldsymbol\theta,\mathbf{V})=\mathbf{D}(\boldsymbol\theta)^\top\,\mathrm{diag}(1/\mathbf{V})\,\mathbf{D}(\boldsymbol\theta),$$
+and fits it by a variational-Bayes loop around INLA. Two functions do the work:
+`ng.check(fit)` (is the Gaussian assumption adequate?) and `ngvb(fit)` (fit the extension).
+
+```{r setup}
+library(ngvb2)
+```
+
+## A random-walk example
+
+We simulate a series with two abrupt level shifts — exactly the kind of local
+non-Gaussian behaviour a Gaussian RW1 cannot capture.
+
+```{r sim}
+set.seed(3); N <- 100
+x <- cumsum(rnorm(N, sd = 0.3)); x[50:N] <- x[50:N] + 6; x[80:N] <- x[80:N] - 9
+y <- x + rnorm(N, sd = 0.4)
+```
+
+Fit the ordinary latent Gaussian model (remember `config = TRUE`):
+
+```{r lgm}
+LGM <- inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
+            data = data.frame(y = y, i = 1:N),
+            control.compute = list(config = TRUE))
+```
+
+**Check** the latent Gaussian assumption. A small p-value and large per-index
+sensitivities `d` flag non-Gaussianity (here at the two shifts):
+
+```{r check}
+chk <- ng.check(LGM, compute.fixed = FALSE)
+chk
+which(chk$components$i$d > quantile(chk$components$i$d, 0.95))
+```
+
+**Extend** to the non-Gaussian model — one line, model auto-detected:
+
+```{r fit}
+LnGM <- ngvb(LGM, iter = 5, verbose = FALSE)
+LnGM
+```
+
+The mixing variables `V` are inflated exactly where the series jumps, adding local
+flexibility there:
+
+```{r plot, fig.width = 7, fig.height = 3}
+plot(LnGM)
+```
+
+## Other models
+
+Auto-detection covers `iid`, `rw1`, `rw2`, `ar1`, and `besag`/`besagproper` (CAR/ICAR)
+directly from the fit. SAR and SPDE are supplied through `components`:
+
+```{r other, eval = FALSE}
+# SAR (W = row-standardised adjacency):
+ngvb(LGM, components = list(s = ngvb_operator("sar", W = W)))
+
+# Matern/SPDE (pass the mesh, which the fit does not retain):
+ngvb(LGM, components = list(s = ngvb_operator("spde", spde = spde)))
+```
+
+## Multiple components
+
+Additive models are handled jointly, each `f()` term getting its own mixing
+variables and non-Gaussianity parameter:
+
+```{r multi, eval = FALSE}
+LGM  <- inla(y ~ f(time, model = "ar1") + f(subj, model = "iid"),
+             data = d, control.compute = list(config = TRUE))
+summary(ngvb(LGM))
+```
