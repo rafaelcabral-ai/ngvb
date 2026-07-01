@@ -5,7 +5,7 @@
 \title{Summary of an ngvb fit: the underlying INLA summaries plus, per component, the
 non-Gaussianity parameter and the most strongly down-weighted (outlying) indices.}
 \usage{
-summary.ngvb(object, n.flag = 5, ...)
+\method{summary}{ngvb}(object, n.flag = 5, ...)
 }
 \arguments{
 \item{object}{An `ngvb` object.}

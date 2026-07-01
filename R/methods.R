@@ -15,6 +15,7 @@ print.ngvb <- function(x, ...) {
 #' @param object An `ngvb` object.
 #' @param n.flag Number of top mixing-variable indices to report per component.
 #' @param ... Ignored.
+#' @method summary ngvb
 #' @export
 summary.ngvb <- function(object, n.flag = 5, ...) {
   cat("Latent non-Gaussian model (ngvb2)\n\n")
