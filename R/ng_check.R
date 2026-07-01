@@ -55,9 +55,9 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
   family  <- fit$.args$family[1]
   gaussian <- identical(family, "gaussian")
 
-  ## fixed-effect bookkeeping (compact-mode: subtract Predictor length)
+  ## fixed-effect bookkeeping (compact-mode: subtract all predictor-block lengths)
   ct       <- fit$misc$configs$contents
-  pred.len <- if ("Predictor" %in% ct$tag) ct$length[match("Predictor", ct$tag)] else 0L
+  pred.len <- ngvb_predictor_length(ct)
   fixed.names <- rownames(fit$summary.fixed)
   fixed.pos   <- if (length(fixed.names))
     vapply(fixed.names, function(nm) ct$start[match(nm, ct$tag)] - pred.len, 0L) else integer(0)

@@ -9,12 +9,18 @@
 ## ---------------------------------------------------------------------------
 
 #' @keywords internal
+## config$Q / mean / Qinv exclude ALL predictor blocks ("Predictor" and, with an
+## inla.stack A-matrix, "APredictor"); the random/fixed effects that remain are
+## indexed after that offset.
+#' @keywords internal
+ngvb_predictor_length <- function(ct) sum(ct$length[grepl("Predictor", ct$tag)])
+
+#' @keywords internal
 ngvb_component_index <- function(fit, comp.name) {
   ct <- fit$misc$configs$contents
-  predlen <- if ("Predictor" %in% ct$tag) ct$length[match("Predictor", ct$tag)] else 0L
-  k <- which(ct$tag == comp.name)
+  k  <- which(ct$tag == comp.name)
   if (length(k) != 1L) stop("ngvb2: component '", comp.name, "' not found in configs")
-  start <- ct$start[k] - predlen
+  start <- ct$start[k] - ngvb_predictor_length(ct)
   start:(start + ct$length[k] - 1L)
 }
 

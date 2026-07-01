@@ -37,6 +37,23 @@ test_that("SVI method also recovers planted outliers", {
   expect_setequal(order(res$V$i, decreasing = TRUE)[1:2], c(30, 70))
 })
 
+test_that("ngvb and ng.check run on a stack-based SPDE fit (APredictor indexing)", {
+  skip_on_cran(); skip_if_not_installed("INLA"); skip_if_not_installed("fmesher")
+  set.seed(1); n <- 60; loc <- matrix(runif(n * 2), n, 2)
+  mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.25, 0.5), cutoff = 0.08)
+  spde <- INLA::inla.spde2.matern(mesh); A <- fmesher::fm_basis(mesh, loc)
+  y <- as.numeric(A %*% rnorm(mesh$n, sd = 1.5)) + rnorm(n, sd = 0.2)
+  stk <- INLA::inla.stack(data = list(y = y), A = list(A), effects = list(s = 1:mesh$n), tag = "e")
+  LGM <- INLA::inla(y ~ -1 + f(s, model = spde), data = INLA::inla.stack.data(stk),
+                    control.predictor = list(A = INLA::inla.stack.A(stk)),
+                    control.compute = list(config = TRUE))
+  op  <- ngvb_operator("spde", spde = spde)
+  res <- ngvb(LGM, components = list(s = op), iter = 2, verbose = FALSE)
+  expect_s3_class(res, "ngvb")
+  chk <- ng.check(LGM, components = list(s = op), compute.fixed = FALSE)
+  expect_true(is.finite(chk$components$s$s0))
+})
+
 test_that("ng.check returns a fixed-effect sensitivity matrix without error", {
   skip_on_cran(); skip_if_not_installed("INLA")
   set.seed(1); ng <- 25; nrep <- 5; gi <- rep(1:ng, each = nrep)
