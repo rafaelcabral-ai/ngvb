@@ -37,6 +37,19 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #' @return An object of class `ngvb.check`: per component the BF sensitivity `s0`,
 #'   the per-index contributions `d`, and (Gaussian response) the reference SD and
 #'   p-value; plus `sens.fixed` if requested.
+#' @seealso [ngvb()]
+#' @examples
+#' \donttest{
+#' if (requireNamespace("INLA", quietly = TRUE)) {
+#'   set.seed(1); n <- 100
+#'   x <- cumsum(rnorm(n, sd = 0.3)); x[50:n] <- x[50:n] + 6
+#'   y <- x + rnorm(n, sd = 0.4)
+#'   LGM <- INLA::inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
+#'                     data = data.frame(y = y, i = 1:n),
+#'                     control.compute = list(config = TRUE))
+#'   ng.check(LGM)      # small p-value flags departure from latent Gaussianity
+#' }
+#' }
 #' @export
 ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = TRUE) {
   if (is.null(fit$misc$configs))

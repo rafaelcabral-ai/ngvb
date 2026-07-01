@@ -116,7 +116,22 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SCVI", "SVI"),
 #'   or `"SVI"` (structured).
 #' @param alpha.eta Exponential-PC-prior rate(s) on the non-Gaussianity parameter(s).
 #' @param iter,stop.rel.change,n.sampling,verbose VB controls.
-#' @return A list with the final `fit`, mixing vectors `V`, `eta`, etc.
+#' @return An object of class `ngvb` with the final INLA `fit`, the mixing
+#'   vectors `V`, the non-Gaussianity parameters `eta`, and their trajectory.
+#' @seealso [ng.check()], [ngvb_operator()]
+#' @examples
+#' \donttest{
+#' if (requireNamespace("INLA", quietly = TRUE)) {
+#'   set.seed(1); n <- 100
+#'   x <- cumsum(rnorm(n, sd = 0.3)); x[50:n] <- x[50:n] + 6      # a level shift
+#'   y <- x + rnorm(n, sd = 0.4)
+#'   LGM  <- INLA::inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
+#'                      data = data.frame(y = y, i = 1:n),
+#'                      control.compute = list(config = TRUE))
+#'   LnGM <- ngvb(LGM, iter = 5)     # non-Gaussian extension, model auto-detected
+#'   summary(LnGM)
+#' }
+#' }
 #' @export
 ngvb <- function(fit, selection = NULL, components = NULL, method = c("SCVI", "SVI"),
                  alpha.eta = 1, iter = 10, stop.rel.change = 1e-3,

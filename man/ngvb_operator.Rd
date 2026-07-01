@@ -7,13 +7,21 @@
 ngvb_operator(type, ...)
 }
 \arguments{
-\item{type}{Model type, e.g. "ar1".}
+\item{type}{Model type: one of `"iid"`, `"rw1"`, `"rw2"`, `"ar1"`, `"sar"`,
+`"car"`, `"spde"`, `"ou"`.}
 
-\item{...}{Model-specific arguments (see the `op_*` builders).}
+\item{...}{Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
+`spde` for spde, `loc` for ou).}
 }
 \value{
-An operator descriptor list.
+An operator descriptor: a list with `Dfunc(theta)`, the constant
+  vector `h`, `rankdef`, and prior/graph metadata.
 }
 \description{
 Construct an ngvb operator descriptor.
+}
+\examples{
+op <- ngvb_operator("rw1", n = 10)
+dim(op$Dfunc(0))       # D(theta): the 9 x 10 first-difference operator
+ngvb_precision(op)     # Q = D^T diag(1/h) D  (the RW1 structure matrix)
 }

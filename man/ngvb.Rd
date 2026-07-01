@@ -33,8 +33,26 @@ or `"SVI"` (structured).}
 \item{iter, stop.rel.change, n.sampling, verbose}{VB controls.}
 }
 \value{
-A list with the final `fit`, mixing vectors `V`, `eta`, etc.
+An object of class `ngvb` with the final INLA `fit`, the mixing
+  vectors `V`, the non-Gaussianity parameters `eta`, and their trajectory.
 }
 \description{
 Fit a latent non-Gaussian model from a fitted INLA (LGM) object.
+}
+\examples{
+\donttest{
+if (requireNamespace("INLA", quietly = TRUE)) {
+  set.seed(1); n <- 100
+  x <- cumsum(rnorm(n, sd = 0.3)); x[50:n] <- x[50:n] + 6      # a level shift
+  y <- x + rnorm(n, sd = 0.4)
+  LGM  <- INLA::inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
+                     data = data.frame(y = y, i = 1:n),
+                     control.compute = list(config = TRUE))
+  LnGM <- ngvb(LGM, iter = 5)     # non-Gaussian extension, model auto-detected
+  summary(LnGM)
+}
+}
+}
+\seealso{
+[ng.check()], [ngvb_operator()]
 }
