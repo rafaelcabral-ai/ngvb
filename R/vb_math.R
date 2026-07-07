@@ -41,6 +41,47 @@ mGIG <- function(p, a, b, order = 1L, n = 2000L) {
   mean(rGIG(n, p, a, b)^order)
 }
 
+## Full q(eta) summary from a SINGLE draw (mean/inverse-mean/sd/median/CI all
+## computed from the same n.sampling samples, rather than mGIG's independent
+## draws per moment -- less MC noise between the two moments that feed the
+## next V-update, and the sd/median/CI come for free from the same draws).
+## q05/q95 give a 90% credible interval (not the posterior mean +/- sd).
+#' @keywords internal
+gig_moments <- function(p, a, b, n = 2000L) {
+  x <- rGIG(n, p, a, b)
+  list(mean = mean(x), median = stats::median(x), inv_mean = mean(1 / x),
+       sd = stats::sd(x),
+       q05 = stats::quantile(x, 0.05, names = FALSE),
+       q95 = stats::quantile(x, 0.95, names = FALSE),
+       samples = x, p = p, a = a, b = b)
+}
+
+## Weighted quantile on a discretized (grid, weight) density -- used to give
+## scvi_update() the same median/CI summary as gig_moments(), from its quadrature.
+#' @keywords internal
+weighted_quantile <- function(grid, w, probs) {
+  o <- order(grid); grid <- grid[o]; w <- w[o]
+  cw <- cumsum(w) / sum(w)
+  vapply(probs, function(p) grid[which(cw >= p)[1L]], numeric(1))
+}
+
+## Per-index posterior summary of the mixing variables V_i ~ GIG(-1, a_V, b_V_i),
+## conditional on the fitted eta (a_V is shared, b_V varies by index). The mean
+## is exact (GIGM1, vectorized over b_V); GIGrvg::rgig has no closed-form
+## quantile and SEGFAULTS if given a vector chi, so median/q05/q95 are read off
+## one Monte-Carlo sample PER INDEX (looped; run once at convergence, not per
+## VB iteration, so the cost is negligible).
+#' @keywords internal
+ngvb_V_summary <- function(a_V, b_V, n = 2000L) {
+  mean_v <- GIGM1(-1, a_V, b_V)
+  qs <- vapply(b_V, function(b_i) {
+    x <- rGIG(n, -1, a_V, b_i)
+    c(median = stats::median(x), q05 = stats::quantile(x, 0.05, names = FALSE),
+      q95 = stats::quantile(x, 0.95, names = FALSE))
+  }, numeric(3))
+  list(mean = mean_v, median = qs["median", ], q05 = qs["q05", ], q95 = qs["q95", ])
+}
+
 ## ---- SCVI: the collapsed (eta integrated out) posterior of eta ------------
 ## log q(eta) up to a constant (Cabral, Bolin & Rue 2022, Theorem 2), with
 ## theta = alpha.eta the exponential PC-prior rate and d_i = E[(Dx)_i^2].
@@ -74,8 +115,14 @@ scvi_update <- function(d, h, alpha, N, cap = 500, ngrid = 400L) {
   deta[ngrid]          <- grid[ngrid] - grid[ngrid - 1]
   deta[2:(ngrid - 1L)] <- (grid[3:ngrid] - grid[1:(ngrid - 2L)]) / 2
   w <- exp(lp - max(lp)) * deta; w <- w / sum(w)
-  list(eta  = sum(w * grid),
-       EVm1 = vapply(seq_along(h),
-                     function(i) sum(w * GIGMm1(-1, 1 / grid, d[i] + h[i]^2 / grid)),
-                     numeric(1)))
+  eta.mean <- sum(w * grid)
+  list(eta    = eta.mean,
+       median = weighted_quantile(grid, w, 0.5),
+       EVm1   = vapply(seq_along(h),
+                       function(i) sum(w * GIGMm1(-1, 1 / grid, d[i] + h[i]^2 / grid)),
+                       numeric(1)),
+       sd     = sqrt(max(0, sum(w * grid^2) - eta.mean^2)),
+       q05    = weighted_quantile(grid, w, 0.05),
+       q95    = weighted_quantile(grid, w, 0.95),
+       grid = grid, weights = w)
 }

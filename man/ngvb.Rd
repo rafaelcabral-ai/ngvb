@@ -9,7 +9,8 @@ ngvb(
   selection = NULL,
   components = NULL,
   method = c("SVI", "SCVI"),
-  alpha.eta = 1,
+  alpha.eta = 2,
+  identify.scale = TRUE,
   iter = 20,
   stop.rel.change = 0.001,
   n.sampling = 2000,
@@ -25,12 +26,34 @@ non-Gaussianity (default: all random effects).}
 \item{components}{Optional named list of operator descriptors overriding
 auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).}
 
-\item{method}{Variational algorithm: `"SVI"` (structured, the default -- robust)
-or `"SCVI"` (structured & collapsed; more accurate when non-Gaussianity is
-clearly present, but its collapsed eta-posterior can drift toward N/2 when the
-non-Gaussian signal is weak).}
+\item{method}{Variational algorithm: `"SVI"` (structured, mean-field; the
+default -- more reliable) or `"SCVI"` (structured & collapsed; reaches a
+fixed point in far fewer iterations, but its collapsed marginal can
+over-shrink a weak-but-genuine effect all the way to Gaussian, `eta ~ 0`,
+where SVI holds a small positive value). The two agree when the signal is
+strong or clearly absent and disagree in the weak-signal regime; prefer the
+default `"SVI"` unless you specifically need SCVI's speed and have checked
+the two give the same answer on your problem. Regardless of method, when a
+component's discrepancies are small but roughly homogeneous across all its
+indices (no real outlier/inlier split), the fit can drift toward a large,
+mostly prior-driven eta rather than genuine non-Gaussianity -- see
+`alpha.eta` and the degeneracy warning this function may emit.}
 
-\item{alpha.eta}{Exponential-PC-prior rate(s) on the non-Gaussianity parameter(s).}
+\item{alpha.eta}{Exponential-PC-prior rate(s) on the non-Gaussianity
+parameter(s): larger values shrink harder toward the Gaussian model
+(`eta = 0`). If a fit triggers the degeneracy warning, raise this (e.g.
+by 2-5x) before trusting the result.}
+
+\item{identify.scale}{Enforce the scale-identifiability constraint (default
+`TRUE`). The conditional precision is invariant under
+\eqn{(\tau, \mathbf V) \mapsto (c\tau, c\mathbf V)}, an exact flat ridge in
+the likelihood that the VB loop can otherwise walk -- letting the mixing
+variables absorb the overall scale and inflating `eta` spuriously (most
+visibly for intrinsic models such as `besag`/`rw`). With `identify.scale`
+on, each component's discrepancies are re-anchored so their total matches
+the Gaussian total each iteration, pinning the scale to `tau` and leaving
+`eta` to respond only to *relative* departures (genuine outliers). Turn off
+only to reproduce the unconstrained updates.}
 
 \item{iter, stop.rel.change, n.sampling, verbose}{VB controls.}
 }
@@ -44,13 +67,10 @@ Fit a latent non-Gaussian model from a fitted INLA (LGM) object.
 \examples{
 \donttest{
 if (requireNamespace("INLA", quietly = TRUE)) {
-  set.seed(1); n <- 100
-  x <- cumsum(rnorm(n, sd = 0.3)); x[50:n] <- x[50:n] + 6      # a level shift
-  y <- x + rnorm(n, sd = 0.4)
-  LGM  <- INLA::inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
-                     data = data.frame(y = y, i = 1:n),
+  data(jumpts)   # a series with two abrupt jumps -- see the package vignette
+  LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
                      control.compute = list(config = TRUE))
-  LnGM <- ngvb(LGM, iter = 5)     # non-Gaussian extension, model auto-detected
+  LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
   summary(LnGM)
 }
 }

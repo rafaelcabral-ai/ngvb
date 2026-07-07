@@ -54,8 +54,8 @@ ngvb_make_fit_V <- function(fit, ops, comp.names) {
 #' Multi-component structured variational inference loop.
 #' @keywords internal
 ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
-                    alpha.eta = 1, iter = 10, stop.rel.change = 1e-3,
-                    n.sampling = 2000, verbose = TRUE) {
+                    alpha.eta = 2, identify.scale = TRUE, iter = 10,
+                    stop.rel.change = 1e-3, n.sampling = 2000, verbose = TRUE) {
   method <- match.arg(method)
   ncomp  <- length(comp.names)
   if (length(alpha.eta) == 1L) alpha.eta <- rep(alpha.eta, ncomp)
@@ -64,6 +64,7 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
   eta    <- stats::setNames(rep(0.5, ncomp), comp.names)
   Eetam1 <- stats::setNames(1 / eta, comp.names)
   eta.hist <- matrix(eta, nrow = 1, dimnames = list(NULL, comp.names))
+  eta.q  <- stats::setNames(vector("list", ncomp), comp.names)   # q(eta) summary, last iteration
 
   fit <- inla.fit.V(V)
   d   <- NULL
@@ -71,6 +72,18 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
   if (verbose) pb <- utils::txtProgressBar(min = 0, max = iter, style = 3)
   for (it in seq_len(iter)) {
     d <- stats::setNames(lapply(comp.names, function(cn) compute_d(fit, ops[[cn]], cn)), comp.names)
+    ## Scale-identification constraint. The conditional precision
+    ## Q = tau * D0' diag(1/V) D0 is invariant under (tau, V) -> (c*tau, c*V),
+    ## an exact flat ridge broken only softly by the V-prior. Re-anchoring each
+    ## component's discrepancy so sum(d) = sum(h) pins that scale to tau, leaving
+    ## eta to respond only to the RELATIVE pattern of the increments (genuine
+    ## outliers), not their absolute level -- which is tau's job. This removes the
+    ## tau<->eta runaway (e.g. intrinsic CAR) without touching well-scaled fits.
+    if (identify.scale)
+      d <- stats::setNames(lapply(comp.names, function(cn) {
+        s <- sum(d[[cn]])
+        if (is.finite(s) && s > 0) d[[cn]] * sum(h[[cn]]) / s else d[[cn]]
+      }), comp.names)
     for (k in seq_len(ncomp)) {
       cn <- comp.names[k]; hk <- h[[cn]]; Nk <- length(hk); dk <- d[[cn]]
       if (method == "SVI") {
@@ -78,15 +91,18 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
         a_V  <- Eetam1[cn]; b_V <- dk + hk^2 * Eetam1[cn]
         EV   <- GIGM1(-1, a_V, b_V); EVm1 <- GIGMm1(-1, a_V, b_V)
         p_e  <- -Nk / 2 + 1; a_e <- 2 * alpha.eta[k]; b_e <- sum(EV - 2 * hk + hk^2 * EVm1)
-        eta[cn]    <- mGIG(p_e, a_e, b_e, order =  1L, n = n.sampling)
-        Eetam1[cn] <- mGIG(p_e, a_e, b_e, order = -1L, n = n.sampling)
+        gm   <- gig_moments(p_e, a_e, b_e, n = n.sampling)   # one draw, both moments + sd/CI
+        eta[cn]    <- gm$mean
+        Eetam1[cn] <- gm$inv_mean
         V[[cn]]    <- 1 / EVm1
+        eta.q[[cn]] <- gm
       } else {
         ## structured & collapsed VI (Theorem 2): E[eta] and E[1/V_i] by
         ## deterministic quadrature of the collapsed eta posterior (stable).
         upd     <- scvi_update(dk, hk, alpha.eta[k], Nk)
         V[[cn]] <- 1 / upd$EVm1
         eta[cn] <- upd$eta
+        eta.q[[cn]] <- upd[c("eta", "median", "sd", "q05", "q95", "grid", "weights")]
       }
     }
     eta.hist <- rbind(eta.hist, eta)
@@ -101,10 +117,58 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
                 if (converged) "converged" else "reached the iteration limit",
                 nrow(eta.hist) - 1L, paste(sprintf("%.3f", eta), collapse = ", ")))
   }
-  out <- list(fit = fit, V = V, eta = eta, h = h, d = d, eta.hist = eta.hist,
+  ngvb_check_degeneracy(V, h, comp.names, alpha.eta, verbose)
+  ## Per-index V_i summary (mean exact; median/90% CI by one-time sampling),
+  ## conditional on the final eta point estimate -- NOT the same quantity as
+  ## `V` itself, which is 1/E[1/V_i] (the precision-consistent plug-in the
+  ## algorithm actually re-fits INLA with, pulled below the mean by Jensen's
+  ## inequality for a right-skewed q(V)). See plot.ngvb()/summary.ngvb().
+  V.summary <- stats::setNames(lapply(comp.names, function(cn) {
+    a_V <- 1 / eta[[cn]]; b_V <- d[[cn]] + h[[cn]]^2 * a_V
+    ngvb_V_summary(a_V, b_V, n = n.sampling)
+  }), comp.names)
+  out <- list(fit = fit, V = V, V.summary = V.summary, eta = eta, eta.q = eta.q,
+              h = h, d = d, eta.hist = eta.hist,
               ops = ops, comp.names = comp.names, iterations = nrow(eta.hist) - 1L)
   class(out) <- "ngvb"
   out
+}
+
+#' Warn when a component's mixing weights have shrunk nearly uniformly across
+#' (almost) every index, rather than concentrating on a few outliers.
+#'
+#' SVI and SCVI target the same fixed point and, when a component's per-index
+#' discrepancies d_i are small but roughly HOMOGENEOUS (no real outlier/inlier
+#' split), that shared fixed point can drift to a large, mostly prior- and
+#' N-driven eta rather than one reflecting genuine local non-Gaussianity: tau
+#' and eta become weakly identified against each other and reinforce each
+#' other iteration over iteration. A uniform V/h << 1 across almost the whole
+#' component is the signature of that regime, not of real outlier detection.
+#' @keywords internal
+ngvb_check_degeneracy <- function(V, h, comp.names, alpha.eta, verbose,
+                                  frac.threshold = 0.8, ratio.threshold = 0.5,
+                                  inflate.threshold = 2) {
+  for (k in seq_along(comp.names)) {
+    cn <- comp.names[k]
+    r  <- V[[cn]] / h[[cn]]
+    frac.low <- mean(r < ratio.threshold)
+    ## Degenerate = almost everything shrunk AND nothing inflated. A genuine
+    ## heavy-tailed fit also shrinks most indices below h, but it pays for that
+    ## with a few strongly inflated ones (V/h large); the presence of any real
+    ## outlier (max V/h above inflate.threshold) rules degeneracy out.
+    if (frac.low > frac.threshold && max(r) < inflate.threshold) {
+      msg <- sprintf(paste0(
+        "ngvb: component '%s' -- %.0f%% of indices show V/h < %.2g (mostly-uniform ",
+        "shrinkage, not a few outliers). This is the signature of a weakly-",
+        "identified fit (eta and the component's precision compete to explain ",
+        "the same homogeneous discrepancy) rather than genuine non-Gaussianity. ",
+        "Consider a stronger alpha.eta (currently %.3g) to keep the fit out of ",
+        "this regime, and inspect plot(fit)'s per-index panel for '%s'."),
+        cn, 100 * frac.low, ratio.threshold, alpha.eta[k], cn)
+      if (verbose) warning(msg, call. = FALSE, immediate. = TRUE) else warning(msg, call. = FALSE)
+    }
+  }
+  invisible(NULL)
 }
 
 #' Fit a latent non-Gaussian model from a fitted INLA (LGM) object.
@@ -114,11 +178,32 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
 #'   non-Gaussianity (default: all random effects).
 #' @param components Optional named list of operator descriptors overriding
 #'   auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).
-#' @param method Variational algorithm: `"SVI"` (structured, the default -- robust)
-#'   or `"SCVI"` (structured & collapsed; more accurate when non-Gaussianity is
-#'   clearly present, but its collapsed eta-posterior can drift toward N/2 when the
-#'   non-Gaussian signal is weak).
-#' @param alpha.eta Exponential-PC-prior rate(s) on the non-Gaussianity parameter(s).
+#' @param method Variational algorithm: `"SVI"` (structured, mean-field; the
+#'   default -- more reliable) or `"SCVI"` (structured & collapsed; reaches a
+#'   fixed point in far fewer iterations, but its collapsed marginal can
+#'   over-shrink a weak-but-genuine effect all the way to Gaussian, `eta ~ 0`,
+#'   where SVI holds a small positive value). The two agree when the signal is
+#'   strong or clearly absent and disagree in the weak-signal regime; prefer the
+#'   default `"SVI"` unless you specifically need SCVI's speed and have checked
+#'   the two give the same answer on your problem. Regardless of method, when a
+#'   component's discrepancies are small but roughly homogeneous across all its
+#'   indices (no real outlier/inlier split), the fit can drift toward a large,
+#'   mostly prior-driven eta rather than genuine non-Gaussianity -- see
+#'   `alpha.eta` and the degeneracy warning this function may emit.
+#' @param alpha.eta Exponential-PC-prior rate(s) on the non-Gaussianity
+#'   parameter(s): larger values shrink harder toward the Gaussian model
+#'   (`eta = 0`). If a fit triggers the degeneracy warning, raise this (e.g.
+#'   by 2-5x) before trusting the result.
+#' @param identify.scale Enforce the scale-identifiability constraint (default
+#'   `TRUE`). The conditional precision is invariant under
+#'   \eqn{(\tau, \mathbf V) \mapsto (c\tau, c\mathbf V)}, an exact flat ridge in
+#'   the likelihood that the VB loop can otherwise walk -- letting the mixing
+#'   variables absorb the overall scale and inflating `eta` spuriously (most
+#'   visibly for intrinsic models such as `besag`/`rw`). With `identify.scale`
+#'   on, each component's discrepancies are re-anchored so their total matches
+#'   the Gaussian total each iteration, pinning the scale to `tau` and leaving
+#'   `eta` to respond only to *relative* departures (genuine outliers). Turn off
+#'   only to reproduce the unconstrained updates.
 #' @param iter,stop.rel.change,n.sampling,verbose VB controls.
 #' @return An object of class `ngvb` with the final INLA `fit`, the mixing
 #'   vectors `V`, the non-Gaussianity parameters `eta`, and their trajectory.
@@ -126,20 +211,17 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
 #' @examples
 #' \donttest{
 #' if (requireNamespace("INLA", quietly = TRUE)) {
-#'   set.seed(1); n <- 100
-#'   x <- cumsum(rnorm(n, sd = 0.3)); x[50:n] <- x[50:n] + 6      # a level shift
-#'   y <- x + rnorm(n, sd = 0.4)
-#'   LGM  <- INLA::inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
-#'                      data = data.frame(y = y, i = 1:n),
+#'   data(jumpts)   # a series with two abrupt jumps -- see the package vignette
+#'   LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
 #'                      control.compute = list(config = TRUE))
-#'   LnGM <- ngvb(LGM, iter = 5)     # non-Gaussian extension, model auto-detected
+#'   LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
 #'   summary(LnGM)
 #' }
 #' }
 #' @export
 ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SCVI"),
-                 alpha.eta = 1, iter = 20, stop.rel.change = 1e-3,
-                 n.sampling = 2000, verbose = TRUE) {
+                 alpha.eta = 2, identify.scale = TRUE, iter = 20,
+                 stop.rel.change = 1e-3, n.sampling = 2000, verbose = TRUE) {
   method <- match.arg(method)
   if (is.null(fit$misc$configs))
     stop("ngvb2: refit the LGM with control.compute = list(config = TRUE).")
@@ -159,6 +241,7 @@ ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SC
 
   inla.fit.V <- ngvb_make_fit_V(fit, ops, comp.names)
   ngvb_vb(inla.fit.V, ops, comp.names, method = method, alpha.eta = alpha.eta,
-          iter = iter, stop.rel.change = stop.rel.change,
+          identify.scale = identify.scale, iter = iter,
+          stop.rel.change = stop.rel.change,
           n.sampling = n.sampling, verbose = verbose)
 }

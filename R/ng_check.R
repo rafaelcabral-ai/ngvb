@@ -4,14 +4,18 @@
 ## s0 = sum_i d_i and (Gaussian response) a reference distribution / p-value,
 ## from INLA's Gaussian mixture over hyperparameter configurations.
 ##
-## Gaussian-response closed form (Eq. 20, Prop. 1), per config k with weight w_k:
-##   b      = D mu_k
-##   Gamma  = -D Sigma_k D^T + diag(h)
+## Gaussian-response closed form (Eq. 20, Prop. 1), evaluated at the posterior
+## MODE gamma-hat of the hyperparameters (the config of largest weight; the
+## reference variance is derived conditional on gamma-hat, so it is not a
+## mixture over configs):
+##   b      = D mu
+##   Gamma  = -D Sigma D^T + diag(h)
 ##   d_i    = (b_i^4 + 3 Gamma_ii^2 - 6 b_i^2 Gamma_ii) / (8 h_i^3)
 ##   s0     = sum_i d_i
 ##   Var(s0)= (3/8) (h^-3)^T (Gamma .^4) (h^-3)        [reference variance, mean 0]
 ##   p      = Phi(-s0 / sqrt(Var(s0)))
-## Operators (D, h) come from the same registry/auto-detection as ngvb().
+## `s0.mixture` / `d.mixture` additionally give the hyperparameter-weighted
+## average. Operators (D, h) come from the same registry/auto-detection as ngvb().
 ## ---------------------------------------------------------------------------
 
 #' Sensitivity of fixed effects to the non-Gaussianity parameter (Theorem 2).
@@ -37,9 +41,11 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #' @param plot If `TRUE` (default), draw the diagnostic plots (see [plot.ngvb.check()]):
 #'   per-index Bayes-factor sensitivity, and the observed overall sensitivity against
 #'   its Gaussian reference distribution.
-#' @return An object of class `ngvb.check`: per component the BF sensitivity `s0`,
-#'   the per-index contributions `d`, and (Gaussian response) the reference SD and
-#'   p-value; plus `sens.fixed` if requested.
+#' @return An object of class `ngvb.check`. Per component, evaluated at the
+#'   hyperparameter posterior mode \eqn{\hat\gamma}: the BF sensitivity `s0`, the
+#'   per-index contributions `d`, and (Gaussian response) the reference SD `sd.ref`
+#'   and `p.value`; the hyperparameter-mixture averages are also kept as
+#'   `s0.mixture` / `d.mixture`. Plus `sens.fixed` if requested.
 #' @seealso [ngvb()]
 #' @examples
 #' \donttest{
@@ -119,9 +125,18 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
           sfix.k[j, k] <- sum(ng_sens_fixed(b, gii, Sxz[, j], muz[j], h))
       }
     }
-    res <- list(s0 = sum(w * s0.k), d = as.numeric(colSums(w * di.mat)))
+    ## The diagnostic s0(y, gamma-hat) and its reference variance (Prop. 1) are
+    ## defined at the posterior MODE of the hyperparameters -- the reference
+    ## variance is derived conditional on gamma-hat, so it must not be mixed
+    ## across configs. Report the mode-config value as the headline (matching the
+    ## reference implementation's s0.mode / var.ref.mode) and keep the
+    ## hyperparameter-mixture average as a secondary field.
+    km  <- which.max(w)                                   # gamma-hat
+    res <- list(s0 = s0.k[km], d = di.mat[km, ],
+                s0.mixture = sum(w * s0.k),
+                d.mixture  = as.numeric(colSums(w * di.mat)))
     if (gaussian) {
-      res$var.ref <- sum(w * varref.k)
+      res$var.ref <- varref.k[km]
       res$sd.ref  <- sqrt(res$var.ref)
       res$p.value <- stats::pnorm(-res$s0 / res$sd.ref)
     }
@@ -132,8 +147,8 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
   out <- list(components = per.comp, sens.fixed = sens.fixed,
               gaussian = gaussian, selection = selection)
   class(out) <- "ngvb.check"
-  if (isTRUE(plot)) plot(out)
-  out
+  if (isTRUE(plot)) print(plot(out))
+  invisible(out)
 }
 
 #' Diagnostic plots for a latent-Gaussianity check.
@@ -149,43 +164,53 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
 #' @method plot ngvb.check
 #' @export
 plot.ngvb.check <- function(x, ...) {
-  comps  <- names(x$components)
-  ink    <- "grey30"; ref <- "grey55"; accent <- "#C64A2E"
-  op <- graphics::par(mfrow = c(length(comps), 2), mar = c(4, 4, 2.6, 1),
-                      mgp = c(2.3, 0.7, 0)); on.exit(graphics::par(op))
-  for (cn in comps) {
+  if (!requireNamespace("ggplot2", quietly = TRUE) ||
+      !requireNamespace("patchwork", quietly = TRUE))
+    stop("plot.ngvb.check() needs the 'ggplot2' and 'patchwork' packages.")
+  accent <- "#C64A2E"
+  panels <- list()
+  for (cn in names(x$components)) {
     cc <- x$components[[cn]]; d <- cc$d
-    ## left: per-index BF sensitivity
-    plot(seq_along(d), d, type = "h", lwd = 2, col = ink, bty = "n",
-         xlab = "index i", ylab = expression(d[i](y)),
-         main = paste0("Sensitivity per index: ", cn))
-    graphics::abline(h = 0, col = "grey80")
-    j <- which.max(abs(d))
-    graphics::points(j, d[j], pch = 19, col = accent)
-    graphics::text(j, d[j], j, pos = 3, col = accent, cex = 0.8, xpd = NA)
-    ## right: observed s0 vs Gaussian reference
+    j  <- which.max(abs(d))
+    df <- data.frame(idx = seq_along(d), d = d, hit = seq_along(d) == j)
+    pD <- ggplot2::ggplot(df, ggplot2::aes(x = .data$idx, y = .data$d)) +
+      ggplot2::geom_segment(ggplot2::aes(xend = .data$idx, yend = 0),
+                            colour = "grey60") +
+      ggplot2::geom_point(ggplot2::aes(colour = .data$hit, size = .data$hit)) +
+      ggplot2::scale_colour_manual(values = c(`FALSE` = "grey35", `TRUE` = accent),
+                                   guide = "none") +
+      ggplot2::scale_size_manual(values = c(`FALSE` = 1, `TRUE` = 2.4), guide = "none") +
+      ggplot2::labs(x = "index i", y = expression(d[i](y)),
+                    title = paste0("BF sensitivity per index: ", cn)) +
+      ngvb_theme()
+
     if (!is.null(cc$sd.ref) && is.finite(cc$sd.ref) && cc$sd.ref > 0) {
       lim <- max(4 * cc$sd.ref, abs(cc$s0) * 1.15)
       xs  <- seq(-lim, lim, length.out = 400)
-      plot(xs, stats::dnorm(xs, 0, cc$sd.ref), type = "l", lwd = 2, col = ref, bty = "n",
-           xlab = expression(s[0](y)), ylab = "reference density",
-           main = paste0("Observed vs reference: ", cn))
-      graphics::abline(v = cc$s0, col = accent, lwd = 2.5)
-      graphics::legend("topright", bty = "n", lwd = 2.5, col = c(ref, accent),
-                       legend = c("Gaussian reference",
-                                  sprintf("observed  (p = %.3f)", cc$p.value)))
+      rd  <- data.frame(s = xs, dens = stats::dnorm(xs, 0, cc$sd.ref))
+      pR <- ggplot2::ggplot(rd, ggplot2::aes(x = .data$s, y = .data$dens)) +
+        ggplot2::geom_area(fill = "grey85", colour = "grey55") +
+        ggplot2::geom_vline(xintercept = cc$s0, colour = accent, linewidth = 1) +
+        ggplot2::labs(x = expression(s[0](y)), y = "reference density",
+                      title = paste0("Observed vs reference: ", cn),
+                      subtitle = sprintf("observed s0 = %.3g  (p = %.3f)",
+                                         cc$s0, cc$p.value)) +
+        ngvb_theme()
     } else {
-      graphics::plot.new()
-      graphics::text(0.5, 0.5, "reference distribution\nonly for Gaussian response",
-                     col = ink, cex = 0.95)
+      pR <- ggplot2::ggplot() +
+        ggplot2::annotate("text", x = 0, y = 0,
+                          label = "reference only for\na Gaussian response",
+                          colour = "grey35") +
+        ggplot2::theme_void()
     }
+    panels <- c(panels, list(pD, pR))
   }
-  invisible(x)
+  patchwork::wrap_plots(panels, ncol = 2, byrow = TRUE)
 }
 
 #' @export
 print.ngvb.check <- function(x, ...) {
-  cat("ngvb2 latent-Gaussianity check\n")
+  cat("ngvb2 latent-Gaussianity check (at the hyperparameter posterior mode)\n")
   tab <- do.call(rbind, lapply(names(x$components), function(cn) {
     c <- x$components[[cn]]
     data.frame(component = cn, s0 = round(c$s0, 3),

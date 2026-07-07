@@ -2,17 +2,22 @@
 % Please edit documentation in R/methods.R
 \name{plot.ngvb}
 \alias{plot.ngvb}
-\title{Diagnostic plots for an ngvb fit: mixing variables per component and the
-evolution of the non-Gaussianity parameters.}
+\title{Diagnostic plots for an ngvb fit.}
 \usage{
 \method{plot}{ngvb}(x, ...)
 }
 \arguments{
 \item{x}{An `ngvb` object.}
 
-\item{...}{Passed to `plot`.}
+\item{...}{Ignored.}
+}
+\value{
+(Invisibly) the `ngvb` object; called for the plot it draws.
 }
 \description{
-Diagnostic plots for an ngvb fit: mixing variables per component and the
-evolution of the non-Gaussianity parameters.
+For each component two panels are drawn: the mixing weights V_i/h_i (posterior
+mean with a 90 percent credible interval, and the plug-in value actually refit
+with INLA), and the posterior density of eta (with its mean and median marked).
+A final panel shows how eta moved across the variational iterations. The plots
+are ggplot2 objects assembled with patchwork.
 }

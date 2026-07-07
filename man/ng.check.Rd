@@ -27,9 +27,11 @@ per-index Bayes-factor sensitivity, and the observed overall sensitivity against
 its Gaussian reference distribution.}
 }
 \value{
-An object of class `ngvb.check`: per component the BF sensitivity `s0`,
-  the per-index contributions `d`, and (Gaussian response) the reference SD and
-  p-value; plus `sens.fixed` if requested.
+An object of class `ngvb.check`. Per component, evaluated at the
+  hyperparameter posterior mode \eqn{\hat\gamma}: the BF sensitivity `s0`, the
+  per-index contributions `d`, and (Gaussian response) the reference SD `sd.ref`
+  and `p.value`; the hyperparameter-mixture averages are also kept as
+  `s0.mixture` / `d.mixture`. Plus `sens.fixed` if requested.
 }
 \description{
 Check the latent Gaussian assumption of an INLA fit.
