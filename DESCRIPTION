@@ -12,6 +12,7 @@ Description: Rebuild of the 'ngvb' package. Checks the latent Gaussian assumptio
     ar(p), Ornstein-Uhlenbeck, CAR/besag, SAR and SPDE/Matern models.
 License: GPL (>= 3)
 Encoding: UTF-8
+LazyData: true
 Depends:
     R (>= 4.1),
     INLA
@@ -21,6 +22,7 @@ Imports:
     stats,
     graphics,
     utils,
+    codetools,
     GIGrvg
 Suggests:
     testthat (>= 3.0.0),
