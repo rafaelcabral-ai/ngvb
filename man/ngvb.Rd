@@ -8,9 +8,9 @@ ngvb(
   fit,
   selection = NULL,
   components = NULL,
-  method = c("SCVI", "SVI"),
+  method = c("SVI", "SCVI"),
   alpha.eta = 1,
-  iter = 10,
+  iter = 20,
   stop.rel.change = 0.001,
   n.sampling = 2000,
   verbose = TRUE
@@ -25,8 +25,10 @@ non-Gaussianity (default: all random effects).}
 \item{components}{Optional named list of operator descriptors overriding
 auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).}
 
-\item{method}{Variational algorithm: `"SCVI"` (structured & collapsed, the default)
-or `"SVI"` (structured).}
+\item{method}{Variational algorithm: `"SVI"` (structured, the default -- robust)
+or `"SCVI"` (structured & collapsed; more accurate when non-Gaussianity is
+clearly present, but its collapsed eta-posterior can drift toward N/2 when the
+non-Gaussian signal is weak).}
 
 \item{alpha.eta}{Exponential-PC-prior rate(s) on the non-Gaussianity parameter(s).}
 

@@ -56,18 +56,26 @@ eta.prior.f <- function(d, h, theta, N) {
   }
 }
 
-## Inverse-CDF sampler for a 1-D log-density on (supp.min, supp.max).
+## SCVI update by DETERMINISTIC quadrature of the 1-D collapsed eta posterior.
+## Returns E[eta] and the reciprocal mixing moments E[1/V_i] by integrating on an
+## adaptive log-grid around the posterior mode -- no sampling, so the result is
+## stable and reproducible (the earlier inverse-CDF spline sampler could overshoot
+## on flat CDF regions and return degenerate eta values).
 #' @keywords internal
-sampler.inverseCDF <- function(logpdf, supp.min = 0, supp.max = 100,
-                               supp.points = 5000, n.samples = 1000) {
-  mode  <- stats::optimize(logpdf, interval = c(supp.min, supp.max), maximum = TRUE)$maximum
-  lpm   <- logpdf(mode)
-  pdf   <- function(x) exp(logpdf(x) - lpm)
-  imin <- 1; while (pdf(mode / 1.3^imin) > 1e-7 && mode / 1.3^imin > supp.min) imin <- imin + 1
-  imax <- 1; while (pdf(mode * 1.3^imax) > 1e-7 && mode * 1.3^imax < supp.max) imax <- imax + 1
-  x     <- seq(max(supp.min + 1e-8, mode / 1.3^imin), min(supp.max, mode * 1.3^imax),
-               length.out = supp.points)
-  dens  <- pdf(x); cdf <- cumsum(dens); cdf <- cdf / cdf[length(cdf)]
-  keep  <- !duplicated(cdf) & cdf < 0.9999999
-  stats::spline(x = cdf[keep], y = x[keep], xout = stats::runif(n.samples))$y
+scvi_update <- function(d, h, alpha, N, cap = 500, ngrid = 400L) {
+  logf <- eta.prior.f(d, h, alpha, N)
+  mode <- tryCatch(stats::optimize(logf, c(1e-4, cap), maximum = TRUE)$maximum,
+                   error = function(e) 1)
+  lo   <- max(1e-4, mode / 50); hi <- min(cap, max(mode * 50, lo * 10))
+  grid <- exp(seq(log(lo), log(hi), length.out = ngrid))
+  lp   <- logf(grid); lp[!is.finite(lp)] <- -Inf
+  deta <- numeric(ngrid)
+  deta[1]              <- grid[2] - grid[1]
+  deta[ngrid]          <- grid[ngrid] - grid[ngrid - 1]
+  deta[2:(ngrid - 1L)] <- (grid[3:ngrid] - grid[1:(ngrid - 2L)]) / 2
+  w <- exp(lp - max(lp)) * deta; w <- w / sum(w)
+  list(eta  = sum(w * grid),
+       EVm1 = vapply(seq_along(h),
+                     function(i) sum(w * GIGMm1(-1, 1 / grid, d[i] + h[i]^2 / grid)),
+                     numeric(1)))
 }

@@ -4,7 +4,13 @@
 \alias{ng.check}
 \title{Check the latent Gaussian assumption of an INLA fit.}
 \usage{
-ng.check(fit, selection = NULL, components = NULL, compute.fixed = TRUE)
+ng.check(
+  fit,
+  selection = NULL,
+  components = NULL,
+  compute.fixed = TRUE,
+  plot = TRUE
+)
 }
 \arguments{
 \item{fit}{An `inla` object fitted with `control.compute = list(config = TRUE)`.}
@@ -15,6 +21,10 @@ ng.check(fit, selection = NULL, components = NULL, compute.fixed = TRUE)
 
 \item{compute.fixed}{If `TRUE`, also return the sensitivity of each fixed effect
 to each component's non-Gaussianity parameter.}
+
+\item{plot}{If `TRUE` (default), draw the diagnostic plots (see [plot.ngvb.check()]):
+per-index Bayes-factor sensitivity, and the observed overall sensitivity against
+its Gaussian reference distribution.}
 }
 \value{
 An object of class `ngvb.check`: per component the BF sensitivity `s0`,

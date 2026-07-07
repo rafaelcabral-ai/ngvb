@@ -8,7 +8,7 @@ ngvb_vb(
   inla.fit.V,
   ops,
   comp.names,
-  method = c("SCVI", "SVI"),
+  method = c("SVI", "SCVI"),
   alpha.eta = 1,
   iter = 10,
   stop.rel.change = 0.001,

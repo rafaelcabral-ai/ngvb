@@ -34,6 +34,9 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #' @param components Optional operator overrides (e.g. SPDE), as in [ngvb()].
 #' @param compute.fixed If `TRUE`, also return the sensitivity of each fixed effect
 #'   to each component's non-Gaussianity parameter.
+#' @param plot If `TRUE` (default), draw the diagnostic plots (see [plot.ngvb.check()]):
+#'   per-index Bayes-factor sensitivity, and the observed overall sensitivity against
+#'   its Gaussian reference distribution.
 #' @return An object of class `ngvb.check`: per component the BF sensitivity `s0`,
 #'   the per-index contributions `d`, and (Gaussian response) the reference SD and
 #'   p-value; plus `sens.fixed` if requested.
@@ -51,7 +54,8 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #' }
 #' }
 #' @export
-ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = TRUE) {
+ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = TRUE,
+                     plot = TRUE) {
   if (is.null(fit$misc$configs))
     stop("ngvb2: refit the LGM with control.compute = list(config = TRUE).")
   if (is.null(selection))
@@ -128,7 +132,55 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
   out <- list(components = per.comp, sens.fixed = sens.fixed,
               gaussian = gaussian, selection = selection)
   class(out) <- "ngvb.check"
+  if (isTRUE(plot)) plot(out)
   out
+}
+
+#' Diagnostic plots for a latent-Gaussianity check.
+#'
+#' For each checked component, draws (left) the per-index Bayes-factor sensitivity
+#' \eqn{d_i(y)} -- spikes locate where the Gaussian assumption is least adequate --
+#' and (right, for a Gaussian response) the observed overall sensitivity
+#' \eqn{s_0=\sum_i d_i} against its Gaussian reference distribution; an observed value
+#' far in the tail (small p-value) signals latent non-Gaussianity.
+#'
+#' @param x An `ngvb.check` object from [ng.check()].
+#' @param ... Ignored.
+#' @method plot ngvb.check
+#' @export
+plot.ngvb.check <- function(x, ...) {
+  comps  <- names(x$components)
+  ink    <- "grey30"; ref <- "grey55"; accent <- "#C64A2E"
+  op <- graphics::par(mfrow = c(length(comps), 2), mar = c(4, 4, 2.6, 1),
+                      mgp = c(2.3, 0.7, 0)); on.exit(graphics::par(op))
+  for (cn in comps) {
+    cc <- x$components[[cn]]; d <- cc$d
+    ## left: per-index BF sensitivity
+    plot(seq_along(d), d, type = "h", lwd = 2, col = ink, bty = "n",
+         xlab = "index i", ylab = expression(d[i](y)),
+         main = paste0("Sensitivity per index: ", cn))
+    graphics::abline(h = 0, col = "grey80")
+    j <- which.max(abs(d))
+    graphics::points(j, d[j], pch = 19, col = accent)
+    graphics::text(j, d[j], j, pos = 3, col = accent, cex = 0.8, xpd = NA)
+    ## right: observed s0 vs Gaussian reference
+    if (!is.null(cc$sd.ref) && is.finite(cc$sd.ref) && cc$sd.ref > 0) {
+      lim <- max(4 * cc$sd.ref, abs(cc$s0) * 1.15)
+      xs  <- seq(-lim, lim, length.out = 400)
+      plot(xs, stats::dnorm(xs, 0, cc$sd.ref), type = "l", lwd = 2, col = ref, bty = "n",
+           xlab = expression(s[0](y)), ylab = "reference density",
+           main = paste0("Observed vs reference: ", cn))
+      graphics::abline(v = cc$s0, col = accent, lwd = 2.5)
+      graphics::legend("topright", bty = "n", lwd = 2.5, col = c(ref, accent),
+                       legend = c("Gaussian reference",
+                                  sprintf("observed  (p = %.3f)", cc$p.value)))
+    } else {
+      graphics::plot.new()
+      graphics::text(0.5, 0.5, "reference distribution\nonly for Gaussian response",
+                     col = ink, cex = 0.95)
+    }
+  }
+  invisible(x)
 }
 
 #' @export

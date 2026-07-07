@@ -53,7 +53,7 @@ ngvb_make_fit_V <- function(fit, ops, comp.names) {
 
 #' Multi-component structured variational inference loop.
 #' @keywords internal
-ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SCVI", "SVI"),
+ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
                     alpha.eta = 1, iter = 10, stop.rel.change = 1e-3,
                     n.sampling = 2000, verbose = TRUE) {
   method <- match.arg(method)
@@ -67,6 +67,8 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SCVI", "SVI"),
 
   fit <- inla.fit.V(V)
   d   <- NULL
+  converged <- FALSE
+  if (verbose) pb <- utils::txtProgressBar(min = 0, max = iter, style = 3)
   for (it in seq_len(iter)) {
     d <- stats::setNames(lapply(comp.names, function(cn) compute_d(fit, ops[[cn]], cn)), comp.names)
     for (k in seq_len(ncomp)) {
@@ -80,24 +82,24 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SCVI", "SVI"),
         Eetam1[cn] <- mGIG(p_e, a_e, b_e, order = -1L, n = n.sampling)
         V[[cn]]    <- 1 / EVm1
       } else {
-        ## structured & collapsed VI (Theorem 2): sample eta from its collapsed
-        ## posterior, then E[1/V_i] = mean over eta-samples of the closed-form
-        ## GIG(-1, 1/eta, d_i + h_i^2/eta) reciprocal moment (no GIG sampling).
-        es   <- sampler.inverseCDF(eta.prior.f(dk, hk, alpha.eta[k], Nk),
-                                   supp.min = 0, supp.max = 100, n.samples = n.sampling)
-        es   <- es[is.finite(es) & es > 0]
-        EVm1 <- vapply(seq_along(hk),
-                       function(i) mean(GIGMm1(-1, 1 / es, dk[i] + hk[i]^2 / es)), numeric(1))
-        V[[cn]] <- 1 / EVm1
-        eta[cn] <- mean(es)
+        ## structured & collapsed VI (Theorem 2): E[eta] and E[1/V_i] by
+        ## deterministic quadrature of the collapsed eta posterior (stable).
+        upd     <- scvi_update(dk, hk, alpha.eta[k], Nk)
+        V[[cn]] <- 1 / upd$EVm1
+        eta[cn] <- upd$eta
       }
     }
     eta.hist <- rbind(eta.hist, eta)
     fit <- inla.fit.V(V)
     rel <- max(abs(eta - eta.hist[it, ]) / eta.hist[it, ])
-    if (verbose) cat(sprintf("  iter %2d:  E[eta] = %s   (max rel change %.4f)\n",
-                             it, paste(sprintf("%.3f", eta), collapse = ", "), rel))
-    if (is.finite(rel) && rel < stop.rel.change) { if (verbose) cat("  converged\n"); break }
+    if (verbose) utils::setTxtProgressBar(pb, it)
+    if (is.finite(rel) && rel < stop.rel.change) { converged <- TRUE; break }
+  }
+  if (verbose) {
+    utils::setTxtProgressBar(pb, iter); close(pb)
+    cat(sprintf("ngvb: %s after %d iteration(s);  E[eta] = %s\n",
+                if (converged) "converged" else "reached the iteration limit",
+                nrow(eta.hist) - 1L, paste(sprintf("%.3f", eta), collapse = ", ")))
   }
   out <- list(fit = fit, V = V, eta = eta, h = h, d = d, eta.hist = eta.hist,
               ops = ops, comp.names = comp.names, iterations = nrow(eta.hist) - 1L)
@@ -112,8 +114,10 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SCVI", "SVI"),
 #'   non-Gaussianity (default: all random effects).
 #' @param components Optional named list of operator descriptors overriding
 #'   auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).
-#' @param method Variational algorithm: `"SCVI"` (structured & collapsed, the default)
-#'   or `"SVI"` (structured).
+#' @param method Variational algorithm: `"SVI"` (structured, the default -- robust)
+#'   or `"SCVI"` (structured & collapsed; more accurate when non-Gaussianity is
+#'   clearly present, but its collapsed eta-posterior can drift toward N/2 when the
+#'   non-Gaussian signal is weak).
 #' @param alpha.eta Exponential-PC-prior rate(s) on the non-Gaussianity parameter(s).
 #' @param iter,stop.rel.change,n.sampling,verbose VB controls.
 #' @return An object of class `ngvb` with the final INLA `fit`, the mixing
@@ -133,8 +137,8 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SCVI", "SVI"),
 #' }
 #' }
 #' @export
-ngvb <- function(fit, selection = NULL, components = NULL, method = c("SCVI", "SVI"),
-                 alpha.eta = 1, iter = 10, stop.rel.change = 1e-3,
+ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SCVI"),
+                 alpha.eta = 1, iter = 20, stop.rel.change = 1e-3,
                  n.sampling = 2000, verbose = TRUE) {
   method <- match.arg(method)
   if (is.null(fit$misc$configs))
