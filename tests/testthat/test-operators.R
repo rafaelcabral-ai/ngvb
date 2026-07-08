@@ -48,6 +48,7 @@ test_that("h is 1 for discrete models and diag(C) for SPDE", {
   expect_true(all(ngvb_operator("ar1", n = 8)$h == 1))
   expect_true(all(ngvb_operator("rw1", n = 8)$h == 1))
   skip_if_not_installed("fmesher")
+  skip_if_not_installed("INLA")
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.3, 0.6), cutoff = 0.1)
   spde <- INLA::inla.spde2.matern(mesh)
