@@ -19,15 +19,18 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,  r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
+          # INLA ships binaries for R 4.3/4.4/4.5 (not the very newest release),
+          # so pin to 4.5 to get a full INLA test on every OS. The extra
+          # ubuntu-devel job runs the CRAN-forward "INLA absent" path.
+          - {os: macos-latest,   r: '4.5', inla: true}
+          - {os: windows-latest, r: '4.5', inla: true}
+          - {os: ubuntu-latest,  r: '4.5', inla: true}
+          - {os: ubuntu-latest,  r: 'devel', inla: false, http-user-agent: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      # INLA can be slow/large; do not let it fail the whole run silently.
+      # Missing Suggests (e.g. ngme2) must not fail the check.
       _R_CHECK_FORCE_SUGGESTS_: false
 
     steps:
@@ -48,16 +51,17 @@ jobs:
             INLA=?ignore-before-r=100.0.0
           needs: check
 
-      # INLA lives in Additional_repositories. Its compute binary is only reliably
-      # available for Linux, so install it on Linux (full INLA test) and leave
-      # Windows/macOS to check the "INLA absent" path, exactly as CRAN's machines do.
-      - name: Install INLA (Linux only)
-        if: runner.os == 'Linux'
+      # Install INLA from its own repository on the R-4.5 jobs (binaries exist for
+      # Windows, macOS-arm64 and Linux there), giving a full INLA test on every OS.
+      # The devel job skips it and exercises the CRAN "INLA absent" path.
+      - name: Install INLA
+        if: matrix.config.inla
         run: |
           install.packages("INLA",
             repos = c(getOption("repos"),
                       INLA = "https://inla.r-inla-download.org/R/stable"),
             dependencies = TRUE)
+          stopifnot(requireNamespace("INLA", quietly = TRUE))
         shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2

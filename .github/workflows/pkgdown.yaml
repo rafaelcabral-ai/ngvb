@@ -25,6 +25,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r@v2
         with:
+          r-version: '4.5'          # INLA ships binaries for 4.5, so the vignette article renders with real output
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
