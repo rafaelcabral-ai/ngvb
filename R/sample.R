@@ -53,6 +53,7 @@
 #' @export
 ngvb_sample <- function(object, n.samples = 50, seed = NULL,
                         verbose = interactive()) {
+  .need_inla()
   stopifnot(inherits(object, "ngvb"))
   if (is.null(object$inla.fit.V))
     stop("ngvb2: this ngvb object predates sampling support; refit with ngvb().")
@@ -160,6 +161,8 @@ print.ngvb.samples <- function(x, ...) {
 #' @param object An `ngvb.samples` object.
 #' @param what Which INLA summary to pool: `"fixed"` (default) or `"hyperpar"`.
 #' @param ... Ignored.
+#' @return A data frame of importance-weighted posterior means and standard
+#'   deviations (invisibly); called for the summary it prints.
 #' @method summary ngvb.samples
 #' @export
 summary.ngvb.samples <- function(object, what = c("fixed", "hyperpar"), ...) {

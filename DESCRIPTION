@@ -1,21 +1,26 @@
 Package: ngvb2
 Type: Package
-Title: Latent Non-Gaussian Models via INLA and Variational Bayes (v2)
-Version: 0.0.0.9000
+Title: Latent Non-Gaussian Modelling with 'INLA' and Variational Bayes
+Version: 0.1.0
 Authors@R: person("Rafael", "Cabral", email = "rafael.medeiros.cabral@gmail.com",
-    role = c("aut", "cre"))
-Description: Rebuild of the 'ngvb' package. Checks the latent Gaussian assumption
-    (ng.check) and fits latent non-Gaussian models (ngvb) on top of R-INLA using a
-    variational Bayes algorithm. A single unified rgeneric/cgeneric engine implements the
-    conditional precision Q(theta, V) = D(theta)^T diag(1/V) D(theta) and owns the
-    V-dependent normalizing constant, and a model registry covers iid, rw1, rw2, ar1,
-    ar(p), Ornstein-Uhlenbeck, CAR/besag, SAR and SPDE/Matern models.
+    role = c("aut", "cre", "cph"))
+Description: Diagnoses whether the latent Gaussian assumption of a model fitted
+    with the 'INLA' package is adequate, and fits latent non-Gaussian extensions
+    that relax it. The function ng.check() reports a Bayes-factor sensitivity
+    diagnostic that says whether, and where, the Gaussian assumption is
+    inadequate; ngvb() then fits the non-Gaussian model by a variational-Bayes
+    loop around 'INLA', adding local flexibility only where the data support it.
+    A single unified engine implements the conditional precision
+    Q(theta, V) = D(theta)^T diag(1/V) D(theta) and owns its normalizing
+    constant, and a model registry covers iid, random-walk, autoregressive,
+    Ornstein-Uhlenbeck, intrinsic-CAR (besag), simultaneous-autoregression,
+    'SPDE'/Matern, seasonal and generic structure-matrix models. Methods follow
+    Cabral, Bolin and Rue (2022) on latent non-Gaussian models.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Depends:
-    R (>= 4.1),
-    INLA
+    R (>= 4.1)
 Imports:
     Matrix,
     methods,
@@ -27,8 +32,8 @@ Imports:
     ggplot2,
     patchwork
 Suggests:
+    INLA,
     testthat (>= 3.0.0),
-    ngme2,
     fmesher,
     sf,
     spData,
@@ -36,7 +41,12 @@ Suggests:
     knitr,
     rmarkdown,
     bslib
+Additional_repositories: https://inla.r-inla-download.org/R/stable
+URL: https://github.com/rafaelcabral96/ngvb2,
+    https://rafaelcabral96.github.io/ngvb2/
+BugReports: https://github.com/rafaelcabral96/ngvb2/issues
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/Needs/website: rmarkdown
 Roxygen: list(roclets = c("rd"))
 RoxygenNote: 7.3.3

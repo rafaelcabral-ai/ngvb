@@ -1,6 +1,8 @@
-# ngvb2 0.0.0.9000
+# ngvb2 0.1.0
 
-Initial rebuild of `ngvb` on top of R-INLA.
+First release: a rebuild of `ngvb` on top of R-INLA. INLA is a `Suggests`
+dependency (installed from its own repository) so the package installs and
+checks cleanly on CRAN.
 
 ## Engine
 * A single unified `rgeneric` engine implements the conditional precision

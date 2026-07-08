@@ -13,6 +13,10 @@
 
 \item{...}{Ignored.}
 }
+\value{
+A data frame of importance-weighted posterior means and standard
+  deviations (invisibly); called for the summary it prints.
+}
 \description{
 Pools a chosen INLA summary across the sampled fits with the importance
 weights, giving posterior means and standard deviations for the latent

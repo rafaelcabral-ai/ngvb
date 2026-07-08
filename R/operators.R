@@ -113,7 +113,7 @@ op_ou <- function(loc, pc.prec = c(U = 1, alpha = 0.01)) {
 ## well-conditioned for kappa>0, so the generic Cholesky determinant is fine (no lognc).
 
 op_spde <- function(spde, mesh = NULL) {
-  if (is.null(spde) && !is.null(mesh)) spde <- INLA::inla.spde2.matern(mesh)
+  if (is.null(spde) && !is.null(mesh)) { .need_inla(); spde <- INLA::inla.spde2.matern(mesh) }
   pin <- spde$param.inla
   M0 <- methods::as(pin$M0, "CsparseMatrix")
   M1 <- methods::as(pin$M1, "CsparseMatrix")

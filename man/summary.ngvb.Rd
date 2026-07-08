@@ -14,6 +14,9 @@ non-Gaussianity parameter and the most strongly down-weighted (outlying) indices
 
 \item{...}{Ignored.}
 }
+\value{
+The `ngvb` object, invisibly; called for the summary it prints.
+}
 \description{
 Summary of an ngvb fit: the underlying INLA summaries plus, per component, the
 non-Gaussianity parameter and the most strongly down-weighted (outlying) indices.

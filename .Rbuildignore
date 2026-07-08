@@ -2,7 +2,13 @@
 ^\.Rproj\.user$
 ^\.git$
 ^\.gitignore$
-^README\.md$
+^\.github$
 ^LICENSE\.md$
 ^doc$
 ^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^\.Rhistory$

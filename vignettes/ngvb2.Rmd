@@ -10,8 +10,10 @@ output:
       version: 5
       bootswatch: flatly
   rmarkdown::html_vignette: default
-vignette: "%\\VignetteIndexEntry{Latent non-Gaussian models with ngvb2} %\\VignetteEngine{knitr::rmarkdown}
-  %\\VignetteEncoding{UTF-8}\n"
+vignette: >
+  %\VignetteIndexEntry{Latent non-Gaussian models with ngvb2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}
@@ -29,8 +31,8 @@ set.seed(1)
 ```
 
 ```{r lib}
-# devtools::install("C:/Users/rafae/Documents/ngvb/ngvb2")  # local dev only; do not run at build time
 library(ngvb2)
+library(INLA)     # ngvb2 uses INLA as a backend; attach it to call inla() directly
 ```
 
 # Overview

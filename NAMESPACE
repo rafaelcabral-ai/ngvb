@@ -1,9 +1,10 @@
 # Hand-maintained during early development.
+# INLA is a Suggests dependency (not on CRAN); it is used via INLA:: at call time
+# and guarded by requireNamespace(), so it is intentionally NOT imported here.
 import(Matrix)
-importFrom(INLA, inla, inla.rgeneric.define, inla.spde2.matern)
 importFrom(methods, as)
 importFrom(utils, globalVariables)
-importFrom(stats, dnorm, optimize, runif, spline)
+importFrom(stats, density, dnorm, optimize, runif, spline)
 export(ngvb)
 export(ng.check)
 S3method(print, ngvb.check)

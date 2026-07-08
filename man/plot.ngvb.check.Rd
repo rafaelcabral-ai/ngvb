@@ -11,6 +11,10 @@
 
 \item{...}{Ignored.}
 }
+\value{
+A `patchwork` object combining the per-component diagnostic panels;
+  called mainly for the plot it draws.
+}
 \description{
 For each checked component, draws (left) the per-index Bayes-factor sensitivity
 \eqn{d_i(y)} -- spikes locate where the Gaussian assumption is least adequate --

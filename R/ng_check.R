@@ -62,6 +62,7 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #' @export
 ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = TRUE,
                      plot = TRUE) {
+  .need_inla()
   if (is.null(fit$misc$configs))
     stop("ngvb2: refit the LGM with control.compute = list(config = TRUE).")
   if (is.null(selection))
@@ -161,6 +162,8 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
 #'
 #' @param x An `ngvb.check` object from [ng.check()].
 #' @param ... Ignored.
+#' @return A `patchwork` object combining the per-component diagnostic panels;
+#'   called mainly for the plot it draws.
 #' @method plot ngvb.check
 #' @export
 plot.ngvb.check <- function(x, ...) {

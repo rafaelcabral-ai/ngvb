@@ -29,6 +29,7 @@ print.ngvb <- function(x, ...) {
 #' @param object An `ngvb` object.
 #' @param n.flag Number of top mixing-variable indices to report per component.
 #' @param ... Ignored.
+#' @return The `ngvb` object, invisibly; called for the summary it prints.
 #' @method summary ngvb
 #' @export
 summary.ngvb <- function(object, n.flag = 5, ...) {

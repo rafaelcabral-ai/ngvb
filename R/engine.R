@@ -85,6 +85,7 @@ ngvb.rgeneric.engine <- function(
 #' @return An object usable as `f(idx, model = <this>)` in an INLA formula.
 #' @export
 ngvb_rgeneric <- function(op, V = op$h) {
+  .need_inla()
   Vinv <- 1 / V
   args <- list(
     ngvb.rgeneric.engine,
@@ -106,6 +107,7 @@ ngvb_rgeneric <- function(op, V = op$h) {
 #' @param op Operator descriptor.
 #' @param theta Hyperparameters (internal scale). Defaults to `op$theta.initial`.
 #' @param V Mixing vector. Defaults to `op$h` (Gaussian model).
+#' @return A sparse precision matrix `Q(theta, V) = D(theta)^T diag(1/V) D(theta)`.
 #' @export
 ngvb_precision <- function(op, theta = op$theta.initial, V = op$h) {
   D <- op$Dfunc(theta)

@@ -230,6 +230,7 @@ ngvb_check_degeneracy <- function(V, h, comp.names, alpha.eta, verbose,
 ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SCVI"),
                  alpha.eta = 2, identify.scale = TRUE, iter = 30,
                  stop.rel.change = 1e-3, n.sampling = 2000, verbose = TRUE) {
+  .need_inla()
   method <- match.arg(method)
   if (is.null(fit$misc$configs))
     stop("ngvb2: refit the LGM with control.compute = list(config = TRUE).")

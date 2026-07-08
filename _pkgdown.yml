@@ -1,0 +1,74 @@
+url: https://rafaelcabral96.github.io/ngvb2/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#C64A2E"
+    base_font: {google: "Inter"}
+    heading_font: {google: "Inter"}
+    code_font: {google: "JetBrains Mono"}
+  bootswatch: flatly
+
+home:
+  title: Latent non-Gaussian models with R-INLA and variational Bayes
+  description: >
+    Check whether the latent Gaussian assumption of an R-INLA model holds, and
+    fit the non-Gaussian extension, each in one line.
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: Get started
+          href: articles/ngvb2.html
+
+reference:
+  - title: Diagnose and fit
+    desc: The two main functions. Both take an ordinary fitted `inla` object.
+    contents:
+      - ng.check
+      - ngvb
+
+  - title: Model comparison
+    desc: Integrate the mixing variables out and compare against the Gaussian model.
+    contents:
+      - ngvb_sample
+      - bayes.factor
+
+  - title: Operators and custom models
+    desc: The dependency-matrix building blocks, and how to add your own.
+    contents:
+      - ngvb_operator
+      - ngvb_custom
+      - ngvb_rgeneric
+      - ngvb_precision
+
+  - title: Plotting
+    desc: Diagnostic plots and maps for areal and geostatistical data.
+    contents:
+      - plot.ngvb
+      - plot.ngvb.check
+      - areal.plot
+      - geo.plot
+
+  - title: Methods
+    desc: S3 methods for the fitted objects.
+    contents:
+      - summary.ngvb
+      - density.ngvb
+      - fitted.ngvb
+      - summary.ngvb.samples
+
+  - title: Data
+    contents:
+      - jumpts
+      - Orthodont
+
+news:
+  releases:
+  - text: "Changelog"
+    href: news/index.html

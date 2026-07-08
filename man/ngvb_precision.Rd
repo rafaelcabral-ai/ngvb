@@ -13,6 +13,9 @@ ngvb_precision(op, theta = op$theta.initial, V = op$h)
 
 \item{V}{Mixing vector. Defaults to `op$h` (Gaussian model).}
 }
+\value{
+A sparse precision matrix `Q(theta, V) = D(theta)^T diag(1/V) D(theta)`.
+}
 \description{
 Used for validation and for computing the discrepancy statistic d_i.
 }
