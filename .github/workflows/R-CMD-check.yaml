@@ -48,9 +48,11 @@ jobs:
             INLA=?ignore-before-r=100.0.0
           needs: check
 
-      # INLA lives in Additional_repositories; install it explicitly so its
-      # binary is present for the checks that need it.
-      - name: Install INLA
+      # INLA lives in Additional_repositories. Its compute binary is only reliably
+      # available for Linux, so install it on Linux (full INLA test) and leave
+      # Windows/macOS to check the "INLA absent" path, exactly as CRAN's machines do.
+      - name: Install INLA (Linux only)
+        if: runner.os == 'Linux'
         run: |
           install.packages("INLA",
             repos = c(getOption("repos"),
