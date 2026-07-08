@@ -17,7 +17,7 @@
 #' Construct an ngvb operator descriptor.
 #'
 #' @param type Model type: one of `"iid"`, `"rw1"`, `"rw2"`, `"ar1"`, `"sar"`,
-#'   `"car"`, `"spde"`, `"ou"`.
+#'   `"car"`, `"spde"`, `"ou"`, `"seasonal"`, `"generic0"`.
 #' @param ... Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
 #'   `spde` for spde, `loc` for ou).
 #' @return An operator descriptor: a list with `Dfunc(theta)`, the constant
@@ -37,8 +37,49 @@ ngvb_operator <- function(type, ...) {
     car = op_car(...),
     spde = op_spde(...),
     ou  = op_ou(...),
+    seasonal = op_seasonal(...),
+    generic0 = op_generic0(...),
     stop("ngvb2: operator type not implemented yet: ", type)
   )
+}
+
+## ---- seasonal: sum of `season` consecutive terms is white noise ------------
+## D0 is the (n-season+1) x n sliding-sum operator, so D0^T D0 is INLA's seasonal
+## structure matrix (rank n-(season-1)). One precision hyperparameter.
+
+op_seasonal <- function(n, season, pc.prec = c(U = 1, alpha = 0.01)) {
+  stopifnot(season >= 2, n > season)
+  m  <- n - season + 1L
+  D0 <- Matrix::sparseMatrix(
+    i = rep(seq_len(m), each = season),
+    j = as.integer(unlist(lapply(seq_len(m), function(r) r:(r + season - 1L)))),
+    x = 1, dims = c(m, n))
+  lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
+  list(type = "seasonal", n = n, ntheta = 1L, rankdef = season - 1L,
+       h = rep(1, m), theta.initial = 4,
+       Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
+       graph    = Matrix::crossprod(D0),
+       logprior = function(theta) lp(theta[1L]))
+}
+
+## ---- generic0: user-supplied structure matrix C, precision Q = tau C --------
+## Factor C = U diag(lambda) U^T and set D0 = diag(sqrt(lambda_+)) U_+^T over the
+## positive eigenvalues, so D0^T D0 = C exactly and rank(D0) = rank(C). A single
+## precision scales D = sqrt(tau) D0. Handles proper and intrinsic C alike.
+
+op_generic0 <- function(C, pc.prec = c(U = 1, alpha = 0.01)) {
+  C  <- as.matrix(C); n <- nrow(C)
+  e  <- eigen((C + t(C)) / 2, symmetric = TRUE)
+  tol <- max(abs(e$values)) * 1e-9
+  pos <- e$values > tol
+  D0 <- methods::as(Matrix::Matrix(diag(sqrt(e$values[pos]), sum(pos)) %*%
+                                   t(e$vectors[, pos, drop = FALSE])), "CsparseMatrix")
+  lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
+  list(type = "generic0", n = n, ntheta = 1L, rankdef = n - sum(pos),
+       h = rep(1, sum(pos)), theta.initial = 4,
+       Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
+       graph    = methods::as(Matrix::Matrix(abs(C) > 0, sparse = TRUE), "CsparseMatrix"),
+       logprior = function(theta) lp(theta[1L]))
 }
 
 ## ---- Ornstein-Uhlenbeck: continuous-time AR1 for irregularly spaced times ---

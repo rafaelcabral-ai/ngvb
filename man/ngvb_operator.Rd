@@ -8,7 +8,7 @@ ngvb_operator(type, ...)
 }
 \arguments{
 \item{type}{Model type: one of `"iid"`, `"rw1"`, `"rw2"`, `"ar1"`, `"sar"`,
-`"car"`, `"spde"`, `"ou"`.}
+`"car"`, `"spde"`, `"ou"`, `"seasonal"`, `"generic0"`.}
 
 \item{...}{Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
 `spde` for spde, `loc` for ou).}

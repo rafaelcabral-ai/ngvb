@@ -69,9 +69,16 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
   fit <- inla.fit.V(V)
   d   <- NULL
   converged <- FALSE
-  if (verbose) pb <- utils::txtProgressBar(min = 0, max = iter, style = 3)
+  ## progress bar only in an interactive session; its carriage returns clutter
+  ## knitr / script logs, whereas the convergence summary below stays on `verbose`.
+  show.pb <- isTRUE(verbose) && interactive()
+  if (show.pb) pb <- utils::txtProgressBar(min = 0, max = iter, style = 3)
   for (it in seq_len(iter)) {
-    d <- stats::setNames(lapply(comp.names, function(cn) compute_d(fit, ops[[cn]], cn)), comp.names)
+    ## d_i = E[(Dx)_i^2] >= 0 in exact arithmetic; clamp tiny negative round-off
+    ## (seen on near-Gaussian components) so the GIG scale b_V = d + h^2/eta stays
+    ## positive and the variational moments are well defined.
+    d <- stats::setNames(lapply(comp.names, function(cn)
+      pmax(compute_d(fit, ops[[cn]], cn), 0)), comp.names)
     ## Scale-identification constraint. The conditional precision
     ## Q = tau * D0' diag(1/V) D0 is invariant under (tau, V) -> (c*tau, c*V),
     ## an exact flat ridge broken only softly by the V-prior. Re-anchoring each
@@ -108,11 +115,11 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
     eta.hist <- rbind(eta.hist, eta)
     fit <- inla.fit.V(V)
     rel <- max(abs(eta - eta.hist[it, ]) / eta.hist[it, ])
-    if (verbose) utils::setTxtProgressBar(pb, it)
+    if (show.pb) utils::setTxtProgressBar(pb, it)
     if (is.finite(rel) && rel < stop.rel.change) { converged <- TRUE; break }
   }
+  if (show.pb) { utils::setTxtProgressBar(pb, iter); close(pb) }
   if (verbose) {
-    utils::setTxtProgressBar(pb, iter); close(pb)
     cat(sprintf("ngvb: %s after %d iteration(s);  E[eta] = %s\n",
                 if (converged) "converged" else "reached the iteration limit",
                 nrow(eta.hist) - 1L, paste(sprintf("%.3f", eta), collapse = ", ")))
@@ -128,8 +135,9 @@ ngvb_vb <- function(inla.fit.V, ops, comp.names, method = c("SVI", "SCVI"),
     ngvb_V_summary(a_V, b_V, n = n.sampling)
   }), comp.names)
   out <- list(fit = fit, V = V, V.summary = V.summary, eta = eta, eta.q = eta.q,
-              h = h, d = d, eta.hist = eta.hist,
-              ops = ops, comp.names = comp.names, iterations = nrow(eta.hist) - 1L)
+              h = h, d = d, eta.hist = eta.hist, alpha.eta = alpha.eta,
+              ops = ops, comp.names = comp.names, iterations = nrow(eta.hist) - 1L,
+              inla.fit.V = inla.fit.V)   # reused by ngvb_sample() to refit at drawn V
   class(out) <- "ngvb"
   out
 }
@@ -220,7 +228,7 @@ ngvb_check_degeneracy <- function(V, h, comp.names, alpha.eta, verbose,
 #' }
 #' @export
 ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SCVI"),
-                 alpha.eta = 2, identify.scale = TRUE, iter = 20,
+                 alpha.eta = 2, identify.scale = TRUE, iter = 30,
                  stop.rel.change = 1e-3, n.sampling = 2000, verbose = TRUE) {
   method <- match.arg(method)
   if (is.null(fit$misc$configs))

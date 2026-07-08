@@ -13,7 +13,9 @@
   "RW2 model"           = "rw2",
   "AR1 model"           = "ar1",
   "Besags ICAR model"   = "car_icar",
-  "SPDE2 model"         = "spde"
+  "SPDE2 model"         = "spde",
+  "Seasonal model"      = "seasonal",
+  "Generic0 model"      = "generic0"
 )
 
 #' Find the `model =` expression of the f(<comp>, ...) term in a formula.
@@ -33,6 +35,28 @@ ngvb_find_f_model <- function(formula, comp.name) {
   }
   walk(formula[[length(formula)]])
   found
+}
+
+#' Find and evaluate a named argument of the f(<comp>, ...) term in a formula.
+#' Used to recover, e.g., `season.length` or `Cmatrix` from the fitted call.
+#' @keywords internal
+ngvb_find_f_arg <- function(fit, comp.name, argname) {
+  frm <- fit$.args$formula
+  found <- NULL
+  walk <- function(e) {
+    if (is.call(e)) {
+      if (identical(e[[1L]], as.name("f"))) {
+        al <- as.list(e)
+        idx <- tryCatch(as.character(al[[2L]]), error = function(...) "")
+        if (length(idx) == 1L && idx == comp.name && argname %in% names(al))
+          found <<- al[[argname]]
+      }
+      for (i in seq_along(e)) walk(e[[i]])
+    }
+  }
+  walk(frm[[length(frm)]])
+  if (is.null(found)) return(NULL)
+  tryCatch(eval(found, environment(frm)), error = function(e) NULL)
 }
 
 #' Recover the inla.spde2 object referenced by a fitted SPDE component.
@@ -85,6 +109,20 @@ ngvb_detect_operator <- function(fit, comp.name, user.op = NULL) {
     rw2 = ngvb_operator("rw2", n = n),
     ar1 = ngvb_operator("ar1", n = n),
     car_icar = ngvb_operator("car", W = ngvb_recover_adjacency(fit, comp.name), intrinsic = TRUE),
-    spde = ngvb_operator("spde", spde = ngvb_recover_spde(fit, comp.name))
+    spde = ngvb_operator("spde", spde = ngvb_recover_spde(fit, comp.name)),
+    seasonal = {
+      s <- ngvb_find_f_arg(fit, comp.name, "season.length")
+      if (is.null(s)) stop("ngvb2: could not recover season.length for '", comp.name,
+                           "'. Supply components = list(", comp.name,
+                           " = ngvb_operator('seasonal', n = ", n, ", season = <s>)).")
+      ngvb_operator("seasonal", n = n, season = as.integer(s))
+    },
+    generic0 = {
+      C <- ngvb_find_f_arg(fit, comp.name, "Cmatrix")
+      if (is.null(C)) stop("ngvb2: could not recover Cmatrix for '", comp.name,
+                           "'. Supply components = list(", comp.name,
+                           " = ngvb_operator('generic0', C = <Cmatrix>)).")
+      ngvb_operator("generic0", C = C)
+    }
   )
 }

@@ -11,7 +11,7 @@ ngvb(
   method = c("SVI", "SCVI"),
   alpha.eta = 2,
   identify.scale = TRUE,
-  iter = 20,
+  iter = 30,
   stop.rel.change = 0.001,
   n.sampling = 2000,
   verbose = TRUE

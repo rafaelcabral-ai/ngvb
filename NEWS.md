@@ -12,8 +12,16 @@ Initial rebuild of `ngvb` on top of R-INLA.
 
 ## Models
 * Operators: `iid`, `rw1`, `rw2`, `ar1`, `sar`, `car` (proper + intrinsic ICAR),
-  `spde`/Matern, and `ou` (Ornstein–Uhlenbeck, irregular times). Each is
-  validated against the analytic precision or native INLA.
+  `spde`/Matern, `ou` (Ornstein–Uhlenbeck, irregular times), `seasonal`, and
+  `generic0` (any user-supplied structure matrix `Cmatrix`, factored via its
+  eigendecomposition; handles proper and intrinsic C). Each is validated against
+  the analytic precision or native INLA. `generic0` is auto-detected from a
+  fitted `inla` object; `seasonal` is available as a manual operator.
+* `ngvb_sample()` draws `V` from its variational posterior `q(V)` and refits INLA
+  at each draw (`ngvb.samples`); `bayes.factor()` returns the marginal-likelihood
+  Bayes factor of the LnGM vs the Gaussian LGM with `V` integrated out (by
+  importance sampling), plus the weight ESS. `summary.ngvb.samples()` pools any
+  INLA summary (fixed effects, hyperparameters) over the draws.
 
 ## User interface
 * `ngvb(fit)` extends a fitted latent Gaussian model to non-Gaussian: it

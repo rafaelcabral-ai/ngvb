@@ -9,10 +9,9 @@ output:
     theme:
       version: 5
       bootswatch: flatly
-vignette: >
-  %\VignetteIndexEntry{Latent non-Gaussian models with ngvb2}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  rmarkdown::html_vignette: default
+vignette: "%\\VignetteIndexEntry{Latent non-Gaussian models with ngvb2} %\\VignetteEngine{knitr::rmarkdown}
+  %\\VignetteEncoding{UTF-8}\n"
 ---
 
 ```{r setup, include = FALSE}
@@ -30,6 +29,7 @@ set.seed(1)
 ```
 
 ```{r lib}
+# devtools::install("C:/Users/rafae/Documents/ngvb/ngvb2")  # local dev only; do not run at build time
 library(ngvb2)
 ```
 
@@ -53,9 +53,9 @@ fit that was run with `control.compute = list(config = TRUE)`:
 * `ngvb(fit)` fits the non-Gaussian extension.
 
 Both auto-detect the models in your fit. Out of the box that covers `iid` random effects,
-random walks `rw1` and `rw2`, autoregressions `ar1`, intrinsic areal models `besag`, and
-Matern (`SPDE`) fields. Anything else can be supplied through `ngvb_custom()`, described in
-the last section.
+random walks `rw1` and `rw2`, autoregressions `ar1`, intrinsic areal models `besag`, Matern
+(`SPDE`) fields, and `generic0` structure matrices. Anything else can be supplied through
+`ngvb_custom()`, described in the last section.
 
 Every example below follows the same short recipe: plot the data, write down the model,
 fit the Gaussian version with INLA, check it with `ng.check()`, and then extend it with
@@ -104,6 +104,40 @@ discrepancies every iteration so their total matches the Gaussian total. That pi
 to $\tau$ and leaves $\eta$ to respond only to the relative pattern of the increments, which
 is the genuine-outlier information it should measure. Well-scaled fits are left essentially
 untouched.
+
+# Which models and likelihoods are supported
+
+Running `inla.list.models()` prints everything R-INLA offers: dozens of latent model
+components under `[latent]`, and a long list of `[likelihood]` families. The non-Gaussianity
+in `ngvb2` lives entirely in the latent field, on its driving noise, and never touches the
+observation model. So **every INLA likelihood is available**: Gaussian, Poisson, binomial,
+negative binomial, survival families, and the rest all work unchanged. You just fit your LGM
+as usual and hand it to `ng.check()` or `ngvb()`.
+
+The latent components split into three groups.
+
+**Detected automatically.** If your fit uses one of these, `ngvb()` and `ng.check()` find it
+with no extra arguments: `iid`, `rw1`, `rw2`, `ar1`, `besag` (the intrinsic CAR), `spde`
+/ `spde2` (Matern fields), and `generic0` (any user-supplied structure matrix `Cmatrix`).
+Each of these is a single operator applied to independent noise, so it has the dependency
+matrix $\mathbf D$ the method needs.
+
+**Added by hand.** Some models are not auto-detected but are still of the operator form, so
+you build them with `ngvb_operator()` or `ngvb_custom()` and pass them through `components`.
+This covers the simultaneous autoregression (`sar`), a proper row-standardised CAR (`car`),
+the Ornstein-Uhlenbeck process (`ou`), a `seasonal` operator, and AR($p$). The `generic0`
+route is the general escape hatch: any Gaussian component whose precision is a fixed structure
+matrix times a scale (for instance `crw2`, `rw2d`, `matern2d`, `dmatern`) can be fit by
+passing that matrix as `Cmatrix`.
+
+**Not compatible.** Some components are not a single operator applied to one field, and the
+method does not apply to them. The main cases are the additive spatial models `bym`, `bym2`,
+`besag2` (a latent field that is a sum of parts), the conditionally specified `besagproper`,
+the copy and mixture constructions `generic1`, `generic2`, `generic3`, `copy`, `scopy`, `z`,
+the measurement-error models `mec`, `meb`, and the nonlinear-covariate effects `sigm`,
+`revsigm`, `log1exp`, `logdist`. For an additive model such as `bym`, the practical fix is to
+split it into its `besag` and `iid` parts as two separate `f()` terms, which `ngvb()` then
+extends jointly.
 
 # A time series with jumps
 
@@ -160,23 +194,34 @@ needed and stayed Gaussian in between. The non-Gaussianity parameter is clearly 
 LnGM$eta
 ```
 
-# Random intercepts and slopes
+How much better is the non-Gaussian model overall? We answer that with a Bayes factor.
+`ngvb_sample()` draws the mixing vector $\mathbf V$ from its posterior, refits INLA at each
+draw, and `bayes.factor()` compares the marginal likelihood of the non-Gaussian model against
+the Gaussian one with $\mathbf V$ integrated out rather than fixed at a plug-in value. Because
+$\mathbf V$ is averaged over, the comparison stays honest even at small sample sizes.
 
-`Orthodont` records a growth measurement for 27 children at four ages. Plotting one line per
-child shows two kinds of variation at once:
-
-```{r ortho-data, fig.height = 3.6}
-ggplot(Orthodont, aes(time, value, group = subject,
-                      colour = factor(Female, labels = c("male", "female")))) +
-  geom_line(alpha = 0.7) +
-  scale_colour_manual(values = c("#4E79A7", "#C64A2E"), name = NULL) +
-  labs(title = "Orthodont growth curves", x = "time", y = "measurement") +
-  theme_minimal(base_size = 12)
+```{r rw1-bf}
+bayes.factor(LnGM, n.samples = 30, seed = 1)
 ```
 
-Each child starts at a different height, which is variation in the intercept, and each child
-grows at a slightly different rate, which is variation in the slope. We give every child its
-own intercept and its own slope, as two `iid` random effects:
+On the usual scale a $\log_{10}$ Bayes factor above $0.5$, $1$, or $2$ is substantial, strong,
+or decisive evidence for the non-Gaussian model. Here it is far into the decisive range. The
+`ess` field is the effective number of draws behind the estimate; if it is small, raise
+`n.samples`.
+
+# Random intercepts and slopes
+
+`Orthodont` records a growth measurement for 27 children at four ages, together with a sex
+indicator and time coded two ways. A quick look at the raw data frame:
+
+```{r ortho-data, fig.height = 5}
+plot(Orthodont)
+```
+
+Two kinds of child-to-child variation matter here. Each child starts at a different height,
+which is variation in the intercept, and each child grows at a slightly different rate, which
+is variation in the slope. We give every child its own intercept and its own slope, as two
+`iid` random effects:
 $$\text{value}_{ij} = \beta_0 + \beta\,\text{covariates}
    + \underbrace{a_{\text{subject}(ij)}}_{\text{random intercept}}
    + \underbrace{b_{\text{subject}(ij)}\,\text{time}_{ij}}_{\text{random slope}}
@@ -215,6 +260,10 @@ The intercept carries more non-Gaussianity than the slope. A couple of children 
 outlying baselines, while the growth rates are close to Gaussian. Nothing was specified by
 hand: the prior on $\eta$ shrank the slope component back toward Gaussian on its own and
 left the intercept free to flag its outliers.
+
+```{r ortho-bf}
+bayes.factor(LnGM, n.samples = 30, seed = 1)
+```
 
 # Areal data: an intrinsic model (besag)
 
@@ -270,6 +319,20 @@ drift up to around three while pushing every edge weight below $\mathbf h$. That
 shrinkage is the signature of a scale runaway rather than a real finding, and `ngvb()` would
 warn about it.
 
+For besag the mixing weights live on the graph edges, not the counties, so to see the spatial
+pattern we average the incident-edge weights $V_i/h_i$ onto each county and map that. As
+expected for this near-Gaussian field, the map is almost flat at one:
+
+```{r besag-map, eval = have_areal, fig.height = 4.2, fig.width = 5.5}
+inc      <- abs(LnGM$ops$s$Dfunc(LnGM$ops$s$theta.initial)) > 0   # edge-by-county incidence
+countyVh <- as.numeric(Matrix::t(inc) %*% (LnGM$V$s / LnGM$h$s)) / Matrix::colSums(inc)
+areal.plot(map, countyVh, title = "mean V/h")
+```
+
+```{r besag-bf, eval = have_areal}
+bayes.factor(LnGM, n.samples = 30, seed = 1)
+```
+
 # Geostatistical data: a Matern (SPDE) field
 
 `weatherdata`, bundled with the package, holds pressure readings across the Pacific
@@ -279,7 +342,8 @@ Northwest. Build the mesh first and plot the stations over it:
 w    <- read.csv(system.file("extdata", "weatherdata.csv", package = "ngvb2"))
 mesh <- inla.mesh.2d(loc = w[, c("lon", "lat")], max.edge = c(1.5, 2.5),
                      cutoff = 0.3, max.n.strict = 400)
-geo.plot(w[, c("lon", "lat", "press")], mesh = mesh, title = "pressure")
+geo.plot(w[, c("lon", "lat", "press")], mesh = mesh, title = "pressure",
+         palette = "RdBu")
 ```
 
 We model pressure as a continuous Matern field through the SPDE approach, the standard tool
@@ -314,12 +378,19 @@ plot(LnGM)
 LnGM$eta
 ```
 
-The mixing variables live on the mesh nodes, so we can map them back over space. Larger
-values mark the parts of the surface where the field departs from a uniform Matern:
+The mixing variables live on the mesh nodes, so we can map them back over space. We plot the
+ratio $V_i/h_i$, which is one where the field is Gaussian and larger where it departs from a
+uniform Matern (for the SPDE the weights $h_i$ are the mesh mass, so $V_i/h_i$ rather than
+$V_i$ is the quantity to look at):
 
 ```{r spde-map, eval = have_fmesher, fig.height = 4.2, fig.width = 5.5}
-nodes <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2], V = LnGM$V$s)
-geo.plot(nodes, mesh = mesh, title = "V")
+nodes <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2],
+                    Vh = LnGM$V$s / LnGM$h$s)
+geo.plot(nodes, mesh = mesh, title = "V/h")
+```
+
+```{r spde-bf, eval = have_fmesher}
+bayes.factor(LnGM, n.samples = 30, seed = 1)
 ```
 
 `ngvb2` recognises the SPDE component because its `f(...)` model is an object built by
@@ -423,29 +494,13 @@ the most flexibility, meaning the largest local departures from the smooth spati
 areal.plot(map, LnGM$V$s, title = "V")
 ```
 
+```{r sar-bf, eval = have_areal}
+bayes.factor(LnGM, n.samples = 30, seed = 1)
+```
+
 That is the whole custom interface. Give `ngvb_custom()` a function `D(theta)` and a vector
 `h`, optionally a prior and a normalizing constant, and any Gaussian model whose precision
 factors as $\mathbf D^\top\mathrm{diag}(1/\mathbf h)\mathbf D$ becomes a latent non-Gaussian
-one.
-
-# Which models are supported
-
-`ngvb2` applies to any latent Gaussian model whose precision factors as
-$$\mathbf Q(\boldsymbol\theta)=\mathbf D(\boldsymbol\theta)^\top\,
-   \mathrm{diag}(1/\mathbf h)\,\mathbf D(\boldsymbol\theta),$$
-that is, models defined by an operator equation
-$\mathbf D(\boldsymbol\theta)\,\mathbf x = \text{noise}$ that whitens the field into
-independent increments. From a fitted `inla` object it recognises the most common such
-models automatically, namely `iid`, `rw1`, `rw2`, `ar1`, `besag` (intrinsic CAR), and
-Matern (`SPDE`) fields. Anything else you add through `ngvb_custom()` by writing down its
-$\mathbf D(\boldsymbol\theta)$ and $\mathbf h$, as we did for the SAR. Other natural
-candidates are AR($p$), seasonal models, and the Ornstein-Uhlenbeck process.
-
-Some models do not fit the framework, because their latent field is not a single operator
-applied to independent noise. The `bym` and `bym2` models add an intrinsic-CAR field and an
-iid field, and INLA returns only the sum, so there is no single $\mathbf D$ whose rows are
-meaningful innovations of the one thing you observe. The remedy is to drop the combined term
-and add the two parts as separate `f()` terms, after which `ngvb()` extends both at once,
-each with its own $\eta$, just as it did for the Orthodont intercept and slope. The proper
-CAR and mixture-type models (`generic1`, `generic2`, `generic3`, `copy`, `z`) fall outside
-for the same reason, because the fitted quantity mixes more than one underlying field.
+one. This is also how you would reach the models listed as "added by hand" earlier, including
+the Ornstein-Uhlenbeck process and, through `generic0`, any component whose precision is a
+fixed structure matrix times a scale.
