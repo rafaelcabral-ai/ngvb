@@ -1,7 +1,7 @@
 # ngvb2
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/rafaelcabral96/ngvb2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafaelcabral96/ngvb2/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 **Latent non-Gaussian modelling with R-INLA and variational Bayes.** A rebuild of
@@ -28,7 +28,7 @@ install.packages("INLA",
   dep = TRUE)
 
 # install.packages("remotes")
-remotes::install_github("rafaelcabral96/ngvb2")
+remotes::install_github("rafaelcabral-ai/ngvb2")
 ```
 
 ## The idea
@@ -71,9 +71,9 @@ parameter, all fit jointly.
 
 ## Documentation
 
-See the [Get started](https://rafaelcabral96.github.io/ngvb2/articles/ngvb2.html) article for
+See the [Get started](https://rafaelcabral-ai.github.io/ngvb2/articles/ngvb2.html) article for
 worked examples across time series, areal, geostatistical and custom models, and the
-[reference](https://rafaelcabral96.github.io/ngvb2/reference/index.html) for the full API.
+[reference](https://rafaelcabral-ai.github.io/ngvb2/reference/index.html) for the full API.
 
 ## References
 
