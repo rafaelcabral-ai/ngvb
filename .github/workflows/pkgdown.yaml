@@ -29,7 +29,12 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          # INLA is not on CRAN; skip it in dependency resolution and install it
+          # explicitly below (same pattern as R-CMD-check.yaml).
+          extra-packages: |
+            any::pkgdown
+            local::.
+            INLA=?ignore-before-r=100.0.0
           needs: website
 
       - name: Install INLA
