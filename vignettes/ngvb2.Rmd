@@ -55,9 +55,10 @@ fit that was run with `control.compute = list(config = TRUE)`:
 * `ngvb(fit)` fits the non-Gaussian extension.
 
 Both auto-detect the models in your fit. Out of the box that covers `iid` random effects,
-random walks `rw1` and `rw2`, autoregressions `ar1`, intrinsic areal models `besag`, Matern
-(`SPDE`) fields, and `generic0` structure matrices. Anything else can be supplied through
-`ngvb_custom()`, described in the last section.
+random walks `rw1` and `rw2`, autoregressions `ar1`, intrinsic areal models `besag`, and
+Matern (`SPDE`) fields. Anything else, including a user-supplied structure matrix through
+`generic0`, is supplied through `ngvb_operator()` / `ngvb_custom()`, described in the last
+section.
 
 Every example below follows the same short recipe: plot the data, write down the model,
 fit the Gaussian version with INLA, check it with `ng.check()`, and then extend it with
@@ -120,17 +121,18 @@ The latent components split into three groups.
 
 **Detected automatically.** If your fit uses one of these, `ngvb()` and `ng.check()` find it
 with no extra arguments: `iid`, `rw1`, `rw2`, `ar1`, `besag` (the intrinsic CAR), `spde`
-/ `spde2` (Matern fields), and `generic0` (any user-supplied structure matrix `Cmatrix`).
-Each of these is a single operator applied to independent noise, so it has the dependency
-matrix $\mathbf D$ the method needs.
+/ `spde2` (Matern fields), and `seasonal`. Each of these is a single operator applied to
+independent noise, so it has the dependency matrix $\mathbf D$ the method needs.
 
 **Added by hand.** Some models are not auto-detected but are still of the operator form, so
 you build them with `ngvb_operator()` or `ngvb_custom()` and pass them through `components`.
 This covers the simultaneous autoregression (`sar`), a proper row-standardised CAR (`car`),
-the Ornstein-Uhlenbeck process (`ou`), a `seasonal` operator, and AR($p$). The `generic0`
-route is the general escape hatch: any Gaussian component whose precision is a fixed structure
-matrix times a scale (for instance `crw2`, `rw2d`, `matern2d`, `dmatern`) can be fit by
-passing that matrix as `Cmatrix`.
+the Ornstein-Uhlenbeck process (`ou`), and AR($p$). The `generic0` route is the general escape
+hatch: a Gaussian component whose precision is a fixed structure matrix times a scale (for
+instance `crw2`, `rw2d`, `matern2d`, `dmatern`) is fit with
+`ngvb_operator("generic0", C = <Cmatrix>)`. It is supplied by hand rather than auto-detected,
+because the `Cmatrix` must be positive semi-definite and an intrinsic (rank-deficient) `C`
+needs its own null-space constraints, which you state explicitly.
 
 **Not compatible.** Some components are not a single operator applied to one field, and the
 method does not apply to them. The main cases are the additive spatial models `bym`, `bym2`,

@@ -14,8 +14,11 @@
   "AR1 model"           = "ar1",
   "Besags ICAR model"   = "car_icar",
   "SPDE2 model"         = "spde",
-  "Seasonal model"      = "seasonal",
-  "Generic0 model"      = "generic0"
+  "Seasonal model"      = "seasonal"
+  ## Note: "Generic0 model" is intentionally NOT auto-detected. generic0 is
+  ## available as a deliberate manual operator, ngvb_operator("generic0", C = ),
+  ## passed via components = -- see its caveats (the Cmatrix must be positive
+  ## semi-definite, and an intrinsic C needs its own null-space constraints).
 )
 
 #' Find the `model =` expression of the f(<comp>, ...) term in a formula.
@@ -116,13 +119,6 @@ ngvb_detect_operator <- function(fit, comp.name, user.op = NULL) {
                            "'. Supply components = list(", comp.name,
                            " = ngvb_operator('seasonal', n = ", n, ", season = <s>)).")
       ngvb_operator("seasonal", n = n, season = as.integer(s))
-    },
-    generic0 = {
-      C <- ngvb_find_f_arg(fit, comp.name, "Cmatrix")
-      if (is.null(C)) stop("ngvb2: could not recover Cmatrix for '", comp.name,
-                           "'. Supply components = list(", comp.name,
-                           " = ngvb_operator('generic0', C = <Cmatrix>)).")
-      ngvb_operator("generic0", C = C)
     }
   )
 }

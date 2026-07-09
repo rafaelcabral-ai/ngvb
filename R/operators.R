@@ -71,14 +71,25 @@ op_generic0 <- function(C, pc.prec = c(U = 1, alpha = 0.01)) {
   C  <- as.matrix(C); n <- nrow(C)
   e  <- eigen((C + t(C)) / 2, symmetric = TRUE)
   tol <- max(abs(e$values)) * 1e-9
+  if (min(e$values) < -tol)
+    warning("ngvb2: generic0 Cmatrix has negative eigenvalues (min = ",
+            signif(min(e$values), 3), "); a structure matrix must be positive ",
+            "semi-definite. The negative part is dropped, so D^T D != C.", call. = FALSE)
   pos <- e$values > tol
   D0 <- methods::as(Matrix::Matrix(diag(sqrt(e$values[pos]), sum(pos)) %*%
                                    t(e$vectors[, pos, drop = FALSE])), "CsparseMatrix")
+  ## Graph = sparsity of Q(theta, V) = D0^T diag(1/V) D0 over ALL V. D0 is the
+  ## (generally dense) eigenvector factor, so this is NOT the sparsity of C:
+  ## for V != h the cancellations that make C sparse no longer hold and Q fills
+  ## in. Declare the structural union pattern of D0^T D0 (crossprod of D0's
+  ## incidence), which the rgeneric engine needs to be a superset of every Q(V).
+  inc   <- methods::as(abs(D0) > 0, "dsparseMatrix")
+  graph <- methods::as(Matrix::crossprod(inc) > 0, "CsparseMatrix")
   lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
   list(type = "generic0", n = n, ntheta = 1L, rankdef = n - sum(pos),
        h = rep(1, sum(pos)), theta.initial = 4,
        Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
-       graph    = methods::as(Matrix::Matrix(abs(C) > 0, sparse = TRUE), "CsparseMatrix"),
+       graph    = graph,
        logprior = function(theta) lp(theta[1L]))
 }
 

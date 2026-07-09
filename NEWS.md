@@ -17,8 +17,11 @@ checks cleanly on CRAN.
   `spde`/Matern, `ou` (Ornstein–Uhlenbeck, irregular times), `seasonal`, and
   `generic0` (any user-supplied structure matrix `Cmatrix`, factored via its
   eigendecomposition; handles proper and intrinsic C). Each is validated against
-  the analytic precision or native INLA. `generic0` is auto-detected from a
-  fitted `inla` object; `seasonal` is available as a manual operator.
+  the analytic precision or native INLA. `seasonal` is auto-detected from a
+  fitted `inla` object; `generic0` is a deliberate manual operator
+  (`ngvb_operator("generic0", C = )`, passed via `components =`) because its
+  `Cmatrix` must be positive semi-definite and an intrinsic `C` needs its own
+  null-space constraints.
 * `ngvb_sample()` draws `V` from its variational posterior `q(V)` and refits INLA
   at each draw (`ngvb.samples`); `bayes.factor()` returns the marginal-likelihood
   Bayes factor of the LnGM vs the Gaussian LGM with `V` integrated out (by

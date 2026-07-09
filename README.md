@@ -61,8 +61,8 @@ rebuild the operator. No arguments are needed for the auto-detected models:
 | Autoregressive order 1 | `"ar1"` | auto |
 | Intrinsic CAR (areal) | `"besag"` | auto (graph recovered) |
 | Matérn / SPDE | `inla.spde2.matern(mesh)` | auto (read from the fit) |
-| Structure matrix | `"generic0"` | auto (any `Cmatrix`) |
 | Seasonal | `"seasonal"` | auto |
+| Structure matrix | `"generic0"` | `ngvb_operator("generic0", C = )` |
 | SAR, proper CAR, OU, AR(p) | — | `ngvb_operator()` / `ngvb_custom()` |
 | Your own precision | — | `ngvb_custom(D, h, ...)` |
 

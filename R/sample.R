@@ -75,8 +75,9 @@ ngvb_sample <- function(object, n.samples = 50, seed = NULL,
   logm <- numeric(n.samples); logw <- numeric(n.samples)
   if (verbose) pb <- utils::txtProgressBar(min = 0, max = n.samples, style = 3)
   for (m in seq_len(n.samples)) {
-    Vm <- stats::setNames(lapply(cn.all, function(cn)
-      GIGrvg::rgig(length(h[[cn]]), lambda = -1, chi = bV[[cn]], psi = aV[[cn]])), cn.all)
+    ## Draw V_i ~ GIG(-1, chi = b_i, psi = a_i) PER INDEX -- rgig does not
+    ## vectorise over its parameters (see .rgig_vec / ngvb_V_summary).
+    Vm <- stats::setNames(lapply(cn.all, function(cn) .rgig_vec(aV[[cn]], bV[[cn]])), cn.all)
     fm <- object$inla.fit.V(Vm)
     fits[[m]] <- fm
     logm[m] <- fm$mlik[1, 1]

@@ -34,6 +34,16 @@ GIGmode <- function(p, a, b) {
 #' @keywords internal
 rGIG <- function(n, p, a, b) GIGrvg::rgig(n, lambda = p, chi = b, psi = a)
 
+## One draw of V_i ~ GIG(-1, psi = a_i, chi = b_i) per index. GIGrvg::rgig does
+## NOT vectorise over its parameters -- given vector chi/psi it silently uses
+## only the first element -- so each index must be drawn separately.
+#' @keywords internal
+.rgig_vec <- function(a, b) {
+  a <- rep_len(a, length(b))
+  vapply(seq_along(b), function(i) GIGrvg::rgig(1L, lambda = -1, chi = b[i], psi = a[i]),
+         numeric(1))
+}
+
 ## Monte-Carlo GIG moment of given order. Used for the eta full-conditional,
 ## whose order -N/2 + 1 makes the Bessel-ratio moments numerically unstable.
 #' @keywords internal

@@ -24,9 +24,9 @@ INLA is a Suggests dependency (it is not on CRAN); install it from
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/rafaelcabral96/ngvb2}
-  \item \url{https://rafaelcabral96.github.io/ngvb2/}
-  \item Report bugs at \url{https://github.com/rafaelcabral96/ngvb2/issues}
+  \item \url{https://github.com/rafaelcabral-ai/ngvb2}
+  \item \url{https://rafaelcabral-ai.github.io/ngvb2/}
+  \item Report bugs at \url{https://github.com/rafaelcabral-ai/ngvb2/issues}
 }
 
 }
