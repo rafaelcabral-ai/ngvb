@@ -186,6 +186,18 @@ ngvb_check_degeneracy <- function(V, h, comp.names, alpha.eta, verbose,
 #'   non-Gaussianity (default: all random effects).
 #' @param components Optional named list of operator descriptors overriding
 #'   auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).
+#'   A component listed here is taken as the full prior specification (including its
+#'   `pc.prec`), so its `f()`-term `hyper` is not consulted.
+#' @section Priors: The ngvb engine rebuilds each selected component's structure,
+#'   so `model`/`graph`/`scale.model` on the original `f()` term are replaced. A
+#'   precision prior set there (`hyper = list(prec = ...)`) *is* honored when it is
+#'   a `pc.prec` or `loggamma` prior — it is translated onto the engine's precision
+#'   hyperparameter and a message reports it. Any other family, a fixed precision,
+#'   or a prior on a secondary hyperparameter (e.g. an AR1 correlation) is dropped
+#'   with a warning and the operator's default PC prior is used; to control it,
+#'   pass the operator via `components` with an explicit
+#'   `pc.prec = c(U = , alpha = )` (the PC prior sets P(sigma > U) = alpha, with
+#'   sigma = 1/sqrt(precision)).
 #' @param method Variational algorithm: `"SVI"` (structured, mean-field; the
 #'   default -- more reliable) or `"SCVI"` (structured & collapsed; reaches a
 #'   fixed point in far fewer iterations, but its collapsed marginal can
@@ -247,6 +259,15 @@ ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SC
   if (verbose)
     cat("Components:", paste(sprintf("%s [%s]", comp.names, vapply(ops, `[[`, "", "type")),
                              collapse = ", "), "\n")
+
+  ## Carry a user's f() precision prior into the engine where we can (pc.prec /
+  ## loggamma), warning + falling back to the operator's default PC prior otherwise.
+  ## Skipped for components the user overrode via `components` -- there the operator
+  ## (and its pc.prec) is the explicit prior specification.
+  user.hyper <- ngvb_extract_f_hyper(fit$.args$formula, comp.names)
+  for (cn in comp.names)
+    if (is.null(components[[cn]]))
+      ops[[cn]] <- ngvb_apply_user_prec_prior(ops[[cn]], user.hyper[[cn]], cn, verbose)
 
   inla.fit.V <- ngvb_make_fit_V(fit, ops, comp.names)
   ngvb_vb(inla.fit.V, ops, comp.names, method = method, alpha.eta = alpha.eta,

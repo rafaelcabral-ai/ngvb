@@ -69,6 +69,10 @@ rebuild the operator. No arguments are needed for the auto-detected models:
 Additive models just work: each `f()` term gets its own mixing variables and non-Gaussianity
 parameter, all fit jointly.
 
+A `pc.prec` or `loggamma` **precision prior** you set on a component (`f(s, …, hyper = list(prec = …))`)
+is carried into the non-Gaussian fit; other prior families are dropped with a warning, in which case
+set the prior explicitly via `components = list(s = ngvb_operator(…, pc.prec = c(U = , alpha = )))`.
+
 ## Documentation
 
 See the [Get started](https://rafaelcabral-ai.github.io/ngvb2/articles/ngvb2.html) article for

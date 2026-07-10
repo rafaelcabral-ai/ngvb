@@ -36,6 +36,16 @@ checks cleanly on CRAN.
   is faster but can over-shrink a weak-but-genuine effect to `eta ~ 0`, so it is
   opt-in. SPDE components are supplied via
   `components = list(s = ngvb_operator("spde", spde = spde))`.
+* **The precision prior set on an `f()` term is carried into the fit.** When the
+  original `f(<name>, ..., hyper = list(prec = ...))` uses a `pc.prec` or
+  `loggamma` prior, `ngvb()` translates it onto the engine's precision
+  hyperparameter (so your prior persists in `LnGM$fit`) and reports that it did.
+  Any other prior family, a fixed precision, or a prior on a secondary
+  hyperparameter (e.g. an AR1 correlation) cannot be mapped: it is dropped with a
+  warning and the operator's default PC prior is used — set it explicitly with
+  `components = list(<name> = ngvb_operator(..., pc.prec = c(U = , alpha = )))`.
+  (Structure arguments such as `graph`/`scale.model` are always rebuilt by the
+  engine and do not carry over.)
 * `ng.check(fit)` computes the Bayes-factor sensitivity diagnostic of Cabral,
   Bolin & Rue (JRSS-B 2025); reproduces the reference implementation exactly and
   additionally handles `inla.stack` (SPDE) fits.

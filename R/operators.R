@@ -59,7 +59,7 @@ op_seasonal <- function(n, season, pc.prec = c(U = 1, alpha = 0.01)) {
        h = rep(1, m), theta.initial = 4,
        Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
        graph    = Matrix::crossprod(D0),
-       logprior = function(theta) lp(theta[1L]))
+       logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
 }
 
 ## ---- generic0: user-supplied structure matrix C, precision Q = tau C --------
@@ -90,7 +90,7 @@ op_generic0 <- function(C, pc.prec = c(U = 1, alpha = 0.01)) {
        h = rep(1, sum(pos)), theta.initial = 4,
        Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
        graph    = graph,
-       logprior = function(theta) lp(theta[1L]))
+       logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
 }
 
 ## ---- Ornstein-Uhlenbeck: continuous-time AR1 for irregularly spaced times ---
@@ -115,7 +115,8 @@ op_ou <- function(loc, pc.prec = c(U = 1, alpha = 0.01)) {
                               diagonals = list(rep(1, n - 1L), rep(1, n), rep(1, n - 1L)))
   logprior <- function(theta) lp(theta[1L]) + stats::dnorm(theta[2L], 0, 3, log = TRUE)
   list(type = "ou", n = n, ntheta = 2L, rankdef = 0L, h = rep(1, n),
-       theta.initial = c(1, 0), Dfunc = Dfunc, graph = graph, logprior = logprior)
+       theta.initial = c(1, 0), Dfunc = Dfunc, graph = graph, logprior = logprior,
+       prec.logprior = lp)
 }
 
 ## ---- SPDE / Matern (alpha = 2):  D = kappa^2 C + G  (C, G = FEM mass, stiffness)
@@ -174,7 +175,7 @@ op_sar <- function(W, pc.prec = c(U = 1, alpha = 0.01)) {
   }
   list(type = "sar", n = n, ntheta = 2L, rankdef = 0L, h = rep(1, n),
        theta.initial = c(0, 0), Dfunc = Dfunc, graph = graph,
-       lognc = lognc, logprior = logprior)
+       lognc = lognc, logprior = logprior, prec.logprior = lp)
 }
 
 ## ---- CAR (proper, besagproper-style):  D = I - rho B,  B = row-standardized
@@ -196,7 +197,7 @@ op_car <- function(W, pc.prec = c(U = 1, alpha = 0.01), intrinsic = FALSE) {
          theta.initial = 4,
          Dfunc = function(theta) sqrt(exp(theta[1L])) * D0,
          graph = Matrix::crossprod(D0),
-         logprior = function(theta) lp(theta[1L]))
+         logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
   } else {
     eigenv <- Re(eigen(W, only.values = TRUE)$values)
     Dfunc <- function(theta) {
@@ -216,7 +217,7 @@ op_car <- function(W, pc.prec = c(U = 1, alpha = 0.01), intrinsic = FALSE) {
     }
     list(type = "car", n = n, ntheta = 2L, rankdef = 0L, h = rep(1, n),
          theta.initial = c(0, 0), Dfunc = Dfunc, graph = graph,
-         lognc = lognc, logprior = logprior)
+         lognc = lognc, logprior = logprior, prec.logprior = lp)
   }
 }
 
@@ -241,7 +242,7 @@ op_rw1 <- function(n, pc.prec = c(U = 1, alpha = 0.01)) {
        h = rep(1, n - 1L), theta.initial = 4,
        Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
        graph    = Matrix::crossprod(D0),
-       logprior = function(theta) lp(theta[1L]))
+       logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
 }
 
 op_rw2 <- function(n, pc.prec = c(U = 1, alpha = 0.01)) {
@@ -253,7 +254,7 @@ op_rw2 <- function(n, pc.prec = c(U = 1, alpha = 0.01)) {
        h = rep(1, n - 2L), theta.initial = 4,
        Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
        graph    = Matrix::crossprod(D0),
-       logprior = function(theta) lp(theta[1L]))
+       logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
 }
 
 op_iid <- function(n, pc.prec = c(U = 1, alpha = 0.01)) {
@@ -264,7 +265,7 @@ op_iid <- function(n, pc.prec = c(U = 1, alpha = 0.01)) {
        h = rep(1, n), theta.initial = 4,
        Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
        graph    = D0,
-       logprior = function(theta) lp(theta[1L]))
+       logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
 }
 
 ## ---- AR1 -------------------------------------------------------------------
@@ -288,25 +289,23 @@ op_ar1 <- function(n, pc.prec = c(U = 1, alpha = 0.01),
   graph <- Matrix::bandSparse(n, n, k = c(-1L, 0L, 1L),
                               diagonals = list(rep(1, n - 1L), rep(1, n), rep(1, n - 1L)))
 
-  U1 <- pc.prec[["U"]]; a1 <- pc.prec[["alpha"]]
   U2 <- pc.cor0[["U"]]; a2 <- pc.cor0[["alpha"]]
+  ## PC prior on the marginal precision (theta[1] = log tau); shared closure so a
+  ## user prior from f() can replace exactly this piece (see ngvb_apply_user_prec_prior).
+  lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
   logprior <- function(theta) {
-    lprec <- theta[1L]; tau <- exp(lprec)
     rho.i <- theta[2L]
     phi   <- 2 * exp(rho.i) / (1 + exp(rho.i)) - 1
-    ## PC prior on the marginal precision (pc.prec), with d tau/d theta Jacobian
-    lambda  <- -log(a1) / U1
-    lp.tau  <- log(lambda / 2) - 1.5 * lprec - lambda / sqrt(tau) + lprec
     ## PC prior on the lag-1 correlation toward rho = 0 (pc.cor0)
     th      <- -log(a2) / sqrt(-log(1 - U2^2))
     s       <- sqrt(-log(1 - phi^2))
     lp.phi  <- -log(2) + log(th) - th * s + log(abs(phi)) - log(1 - phi^2) - 0.5 * log(s^2)
     ## d phi/d theta Jacobian: phi = 2*plogis(theta)-1 => log|dphi/dtheta| = log2 + rho.i - 2 log(1+e^rho.i)
     jac.phi <- log(2) + rho.i - 2 * log(1 + exp(rho.i))
-    lp.tau + lp.phi + jac.phi
+    lp(theta[1L]) + lp.phi + jac.phi
   }
 
   list(type = "ar1", n = n, ntheta = 2L, rankdef = 0L,
        h = rep(1, n), theta.initial = c(1, 1),
-       Dfunc = Dfunc, graph = graph, logprior = logprior)
+       Dfunc = Dfunc, graph = graph, logprior = logprior, prec.logprior = lp)
 }

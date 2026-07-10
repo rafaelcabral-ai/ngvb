@@ -24,7 +24,9 @@ ngvb(
 non-Gaussianity (default: all random effects).}
 
 \item{components}{Optional named list of operator descriptors overriding
-auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).}
+auto-detection (required for SPDE: `list(s = ngvb_operator("spde", spde = spde))`).
+A component listed here is taken as the full prior specification (including its
+`pc.prec`), so its `f()`-term `hyper` is not consulted.}
 
 \item{method}{Variational algorithm: `"SVI"` (structured, mean-field; the
 default -- more reliable) or `"SCVI"` (structured & collapsed; reaches a
@@ -64,6 +66,19 @@ An object of class `ngvb` with the final INLA `fit`, the mixing
 \description{
 Fit a latent non-Gaussian model from a fitted INLA (LGM) object.
 }
+\section{Priors}{
+ The ngvb engine rebuilds each selected component's structure,
+  so `model`/`graph`/`scale.model` on the original `f()` term are replaced. A
+  precision prior set there (`hyper = list(prec = ...)`) *is* honored when it is
+  a `pc.prec` or `loggamma` prior — it is translated onto the engine's precision
+  hyperparameter and a message reports it. Any other family, a fixed precision,
+  or a prior on a secondary hyperparameter (e.g. an AR1 correlation) is dropped
+  with a warning and the operator's default PC prior is used; to control it,
+  pass the operator via `components` with an explicit
+  `pc.prec = c(U = , alpha = )` (the PC prior sets P(sigma > U) = alpha, with
+  sigma = 1/sqrt(precision)).
+}
+
 \examples{
 \donttest{
 if (requireNamespace("INLA", quietly = TRUE)) {
