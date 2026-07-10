@@ -51,8 +51,47 @@ test_that("h is 1 for discrete models and diag(C) for SPDE", {
   skip_if_not_installed("INLA")
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.3, 0.6), cutoff = 0.1)
-  spde <- INLA::inla.spde2.matern(mesh)
+  spde <- INLA::inla.spde2.pcmatern(mesh, prior.range = c(0.3, 0.5),
+                                    prior.sigma = c(1, 0.01))
   op <- ngvb_operator("spde", spde = spde)
   expect_equal(op$h, Matrix::diag(spde$param.inla$M0), ignore_attr = TRUE)
   expect_false(all(op$h == 1))
+  ## PC-prior parameters read straight off the pcmatern object
+  expect_equal(op$pc$lambda.range, -log(0.5) * 0.3, tolerance = 1e-6)
+  expect_equal(op$pc$lambda.sigma, -log(0.01) / 1,  tolerance = 1e-6)
+})
+
+test_that("SPDE operator matches inla.spde2.precision and reproduces its PC prior", {
+  skip_if_not_installed("fmesher")
+  skip_if_not_installed("INLA")
+  set.seed(1); loc <- matrix(runif(60), 30, 2)
+  mesh <- fmesher::fm_mesh_2d(loc, max.edge = 0.3, cutoff = 0.05)
+  spde <- INLA::inla.spde2.pcmatern(mesh, alpha = 2,
+                                    prior.range = c(0.3, 0.5), prior.sigma = c(1, 0.01))
+  op <- ngvb_operator("spde", spde = spde)
+  ## the D-factored precision equals INLA's, at several (log range, log sigma)
+  for (rs in list(c(0.5, 0.8), c(0.2, 1.5))) {
+    th <- c(log(rs[1]), log(rs[2]))
+    Qi <- INLA::inla.spde2.precision(spde, theta = th)
+    D  <- op$Dfunc(th)
+    Qm <- Matrix::t(D) %*% Matrix::Diagonal(x = 1 / op$h) %*% D
+    expect_lt(max(abs(as.matrix(Qi - Qm))) / max(abs(as.matrix(Qi))), 1e-8)
+  }
+  ## the PC prior integrates to 1 and reproduces the range/sigma tail statements
+  g <- seq(log(1e-3), log(60), length.out = 600); dg <- diff(g)[1]
+  lp <- outer(g, g, Vectorize(function(a, b) op$logprior(c(a, b))))
+  expect_equal(sum(exp(lp)) * dg * dg, 1, tolerance = 0.02)
+  Prange <- sum((rowSums(exp(lp)) * dg)[exp(g) < 0.3]) * dg
+  Psigma <- sum((colSums(exp(lp)) * dg)[exp(g) > 1.0]) * dg
+  expect_equal(Prange, 0.5,  tolerance = 0.02)
+  expect_equal(Psigma, 0.01, tolerance = 0.01)
+})
+
+test_that("SPDE operator rejects a non-PC (plain matern) object", {
+  skip_if_not_installed("fmesher")
+  skip_if_not_installed("INLA")
+  set.seed(1); loc <- matrix(runif(40), 20, 2)
+  mesh <- fmesher::fm_mesh_2d(loc, max.edge = 0.4, cutoff = 0.1)
+  expect_error(ngvb_operator("spde", spde = INLA::inla.spde2.matern(mesh)),
+               "pcmatern")
 })

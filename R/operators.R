@@ -19,7 +19,11 @@
 #' @param type Model type: one of `"iid"`, `"rw1"`, `"rw2"`, `"ar1"`, `"sar"`,
 #'   `"car"`, `"spde"`, `"ou"`, `"seasonal"`, `"generic0"`.
 #' @param ... Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
-#'   `spde` for spde, `loc` for ou).
+#'   `loc` for ou). For `"spde"`, pass `spde = INLA::inla.spde2.pcmatern(mesh,
+#'   prior.range = , prior.sigma = )` (or `mesh` + `prior.range` + `prior.sigma`
+#'   and ngvb2 builds it); the non-Gaussian SPDE uses that PC prior on the
+#'   practical range and marginal SD. Plain `inla.spde2.matern()` fields are
+#'   rejected — only the PC-prior parameterization is supported.
 #' @return An operator descriptor: a list with `Dfunc(theta)`, the constant
 #'   vector `h`, `rankdef`, and prior/graph metadata.
 #' @examples
@@ -119,29 +123,101 @@ op_ou <- function(loc, pc.prec = c(U = 1, alpha = 0.01)) {
        prec.logprior = lp)
 }
 
-## ---- SPDE / Matern (alpha = 2):  D = kappa^2 C + G  (C, G = FEM mass, stiffness)
-## h = diag(C) (mass-lumped weights), so Q(V=h) = D^T C^{-1} D = the Matern precision
-## tau (kappa^4 M0 + 2 kappa^2 M1 + M2). theta = (log tau, log kappa^2). Proper (rankdef 0),
-## well-conditioned for kappa>0, so the generic Cholesky determinant is fine (no lognc).
+## ---- SPDE / Matern (alpha = 2), PC-prior parameterization ------------------
+## Built ONLY from an INLA::inla.spde2.pcmatern() object, so the prior is the
+## penalized-complexity prior of Fuglstad et al. (2019) on the interpretable
+## (practical range, marginal SD), exactly as INLA parameterizes it. We take
+## theta = (log range, log sigma) -- the same internal coordinates INLA's pcmatern
+## uses -- and map them to (kappa, tau) analytically:
+##   kappa = sqrt(8 nu) / range,     nu = alpha - d/2
+##   tau   : sigma^2 = Gamma(nu) / (Gamma(nu+d/2) (4 pi)^{d/2} kappa^{2nu} tau^2)
+## The FEM factor D = tau (kappa^2 M0 + M1) (M0 mass-lumped, M2 = M1 M0^{-1} M1)
+## then satisfies Q(V=h) = D^T diag(1/h) D = tau^2 (kappa^4 M0 + 2 kappa^2 M1 + M2),
+## INLA's Matern precision (verified against inla.spde2.precision() to ~1e-16).
+##
+## The joint PC prior factorizes (range PC prior in dimension d, exponential PC
+## prior on sigma):
+##   pi(range) = (d/2) l_r range^{-d/2-1} exp(-l_r range^{-d/2}),  l_r = lambda_range
+##   pi(sigma) = l_s exp(-l_s sigma),                              l_s = lambda_sigma
+## with l_r, l_s read straight off the pcmatern object (hyper$theta1$param =
+## c(l_r, l_s, d)); this reproduces P(range<range0)=p_r, P(sigma>sigma0)=p_s.
 
-op_spde <- function(spde, mesh = NULL) {
-  if (is.null(spde) && !is.null(mesh)) { .need_inla(); spde <- INLA::inla.spde2.matern(mesh) }
+op_spde <- function(spde = NULL, mesh = NULL, prior.range = NULL, prior.sigma = NULL,
+                    alpha = 2) {
+  if (is.null(spde)) {
+    if (is.null(mesh) || is.null(prior.range) || is.null(prior.sigma))
+      stop("ngvb2: supply a PC-prior SPDE via spde = INLA::inla.spde2.pcmatern(...), or ",
+           "give mesh + prior.range + prior.sigma so ngvb2 can build one.", call. = FALSE)
+    .need_inla()
+    spde <- INLA::inla.spde2.pcmatern(mesh, alpha = alpha,
+                                      prior.range = prior.range, prior.sigma = prior.sigma)
+  }
+  if (!inherits(spde, "inla.spde2"))
+    stop("ngvb2: `spde` must be an inla.spde2 object from INLA::inla.spde2.pcmatern().",
+         call. = FALSE)
+  hy <- spde$f$hyper
+  if (is.null(hy$theta1$prior) || !identical(hy$theta1$prior, "pcmatern"))
+    stop("ngvb2: the SPDE operator requires a PC-prior field built with ",
+         "INLA::inla.spde2.pcmatern(). The supplied object uses a '",
+         if (is.null(hy$theta1$prior)) "?" else hy$theta1$prior,
+         "' prior; rebuild it with inla.spde2.pcmatern(mesh, prior.range = , prior.sigma = ).",
+         call. = FALSE)
+
   pin <- spde$param.inla
   M0 <- methods::as(pin$M0, "CsparseMatrix")
   M1 <- methods::as(pin$M1, "CsparseMatrix")
   M2 <- methods::as(pin$M2, "CsparseMatrix")
   n  <- nrow(M0)
+
+  ## PC-prior parameters, straight from the pcmatern object: param = c(l_r, l_s, d)
+  pr <- hy$theta1$param
+  l_r <- pr[1L]; l_s <- pr[2L]; d <- pr[3L]
+  nu  <- alpha - d / 2
+  if (nu <= 0)
+    stop("ngvb2: alpha - d/2 must be positive (got alpha = ", alpha, ", d = ", d, ").",
+         call. = FALSE)
+  ## constant in log tau (see header): 0.5[logGamma(nu) - logGamma(nu+d/2) - (d/2)log 4pi]
+  ctau <- 0.5 * (lgamma(nu) - lgamma(nu + d / 2) - (d / 2) * log(4 * pi))
+
+  ## theta = (log range, log sigma); reuse INLA's own initial values
+  theta0 <- c(if (is.null(hy$theta1$initial)) 0 else hy$theta1$initial,
+              if (is.null(hy$theta2$initial)) 0 else hy$theta2$initial)
+
   Dfunc <- function(theta) {
-    tau <- exp(theta[1L]); k2 <- exp(theta[2L])
-    sqrt(tau) * (k2 * M0 + M1)
+    logkappa <- 0.5 * log(8 * nu) - theta[1L]                       # kappa = sqrt(8 nu)/range
+    logtau   <- ctau - nu * logkappa - theta[2L]                    # from the sigma relation
+    exp(logtau) * (exp(2 * logkappa) * M0 + M1)                     # tau (kappa^2 M0 + M1)
   }
-  list(type = "spde", n = n, ntheta = 2L, rankdef = 0L,
-       h = Matrix::diag(M0),                                   # the only model with h != 1
-       theta.initial = c(0, 0),
-       Dfunc = Dfunc,
-       graph = methods::as(abs(M0) + abs(M1) + abs(M2), "CsparseMatrix"),
-       logprior = function(theta)
-         stats::dnorm(theta[1L], 0, 3, log = TRUE) + stats::dnorm(theta[2L], 0, 3, log = TRUE))
+  logprior <- function(theta) {
+    r <- theta[1L]; s <- theta[2L]                                  # log range, log sigma
+    ## range PC prior (dim d) and exponential sigma PC prior, each with its Jacobian
+    lr <- log(d / 2) + log(l_r) - (d / 2) * r - l_r * exp(-(d / 2) * r)
+    ls <- log(l_s) + s - l_s * exp(s)
+    lr + ls
+  }
+
+  op <- list(type = "spde", n = n, ntheta = 2L, rankdef = 0L,
+             h = Matrix::diag(M0),                                  # mass-lumped weights (h != 1)
+             theta.initial = theta0, Dfunc = Dfunc,
+             graph = methods::as(abs(M0) + abs(M1) + abs(M2), "CsparseMatrix"),
+             logprior = logprior,
+             pc = list(lambda.range = l_r, lambda.sigma = l_s, d = d, nu = nu, alpha = alpha))
+
+  ## Self-check: our analytic precision must equal INLA's at the initial theta.
+  ## (Guards against a non-standard alpha/manifold where the D factorization differs.)
+  if (requireNamespace("INLA", quietly = TRUE)) {
+    Qi <- tryCatch(INLA::inla.spde2.precision(spde, theta = theta0), error = function(e) NULL)
+    if (!is.null(Qi)) {
+      D  <- op$Dfunc(theta0)
+      Qm <- Matrix::t(D) %*% Matrix::Diagonal(x = 1 / op$h) %*% D
+      rel <- max(abs(as.matrix(Qi - Qm))) / max(abs(as.matrix(Qi)))
+      if (is.finite(rel) && rel > 1e-6)
+        stop("ngvb2: SPDE precision reconstruction disagrees with INLA (rel. diff ",
+             signif(rel, 3), "). Only the standard alpha = 2 Matern on a flat mesh is ",
+             "supported for the non-Gaussian SPDE extension.", call. = FALSE)
+    }
+  }
+  op
 }
 
 ## ---- SAR: simultaneous autoregression  D = I - rho W  (proper, full rank) ---

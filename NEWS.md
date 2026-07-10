@@ -22,6 +22,13 @@ checks cleanly on CRAN.
   (`ngvb_operator("generic0", C = )`, passed via `components =`) because its
   `Cmatrix` must be positive semi-definite and an intrinsic `C` needs its own
   null-space constraints.
+* The `spde`/Matern operator is built **only** from an
+  `INLA::inla.spde2.pcmatern()` field: its precision reproduces
+  `inla.spde2.precision()` to ~1e-16, and it carries the field's PC prior on the
+  practical range and marginal SD (Fuglstad et al. 2019) — parameterized in
+  `(log range, log sigma)` exactly as INLA does, with the `lambda`s read straight
+  off the object. A plain `inla.spde2.matern()` field (Gaussian `theta` prior) is
+  rejected with a message to rebuild it with `inla.spde2.pcmatern()`.
 * `ngvb_sample()` draws `V` from its variational posterior `q(V)` and refits INLA
   at each draw (`ngvb.samples`); `bayes.factor()` returns the marginal-likelihood
   Bayes factor of the LnGM vs the Gaussian LGM with `V` integrated out (by

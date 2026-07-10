@@ -45,18 +45,21 @@ test_that("ngvb_find_f_model extracts the model expression from a formula", {
   expect_null(ngvb2:::ngvb_find_f_model(f, "nope"))
 })
 
-test_that("SPDE operator equals tau (kappa^4 M0 + 2 kappa^2 M1 + M2)", {
+test_that("SPDE operator uses lumped mass for h and factors the Matern precision", {
   skip_if_not_installed("fmesher")
   skip_if_not_installed("INLA")
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.3, 0.6), cutoff = 0.1)
-  spde <- INLA::inla.spde2.matern(mesh)
+  spde <- INLA::inla.spde2.pcmatern(mesh, prior.range = c(0.5, 0.5),
+                                    prior.sigma = c(1, 0.01))
   op   <- ngvb_operator("spde", spde = spde)
   expect_true(Matrix::isDiagonal(spde$param.inla$M0))          # lumped mass -> h = diag(M0)
   expect_equal(op$h, Matrix::diag(spde$param.inla$M0), ignore_attr = TRUE)
-  tau <- 1.5; k2 <- 4
-  Q   <- as.matrix(ngvb_precision(op, theta = c(log(tau), log(k2)), V = op$h))
+  ## theta = (log range, log sigma); Q = tau^2 (kappa^4 M0 + 2 kappa^2 M1 + M2)
+  range <- 0.5; sigma <- 1.2
+  kappa <- sqrt(8) / range; tau <- 1 / (sqrt(4 * pi) * kappa * sigma)
+  Q  <- as.matrix(ngvb_precision(op, theta = c(log(range), log(sigma)), V = op$h))
   M0 <- spde$param.inla$M0; M1 <- spde$param.inla$M1; M2 <- spde$param.inla$M2
-  expect_equal(Q, as.matrix(tau * (k2^2 * M0 + 2 * k2 * M1 + M2)),
+  expect_equal(Q, as.matrix(tau^2 * (kappa^4 * M0 + 2 * kappa^2 * M1 + M2)),
                tolerance = 1e-8, ignore_attr = TRUE)
 })

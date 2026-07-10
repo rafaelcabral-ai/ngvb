@@ -1,16 +1,20 @@
 ## Additional operator + method coverage.
 
-test_that("SPDE operator equals tau(kappa^4 M0 + 2 kappa^2 M1 + M2)", {
+test_that("SPDE (range, sigma) map to tau^2(kappa^4 M0 + 2 kappa^2 M1 + M2)", {
   skip_if_not_installed("fmesher")
   skip_if_not_installed("INLA")
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.3, 0.6), cutoff = 0.1)
-  spde <- INLA::inla.spde2.matern(mesh)
+  spde <- INLA::inla.spde2.pcmatern(mesh, alpha = 2,
+                                    prior.range = c(0.5, 0.5), prior.sigma = c(1, 0.01))
   op <- ngvb_operator("spde", spde = spde)
-  tau <- 1.5; k2 <- 4
-  Q <- as.matrix(ngvb_precision(op, theta = c(log(tau), log(k2)), V = op$h))
+  ## theta = (log range, log sigma); nu = 1, d = 2 -> kappa = sqrt(8)/range,
+  ## tau = 1 / (sqrt(4 pi) kappa sigma)
+  range <- 0.4; sigma <- 0.7
+  Q <- as.matrix(ngvb_precision(op, theta = c(log(range), log(sigma)), V = op$h))
+  kappa <- sqrt(8) / range; tau <- 1 / (sqrt(4 * pi) * kappa * sigma)
   M0 <- spde$param.inla$M0; M1 <- spde$param.inla$M1; M2 <- spde$param.inla$M2
-  Q_ref <- as.matrix(tau * (k2^2 * M0 + 2 * k2 * M1 + M2))
+  Q_ref <- as.matrix(tau^2 * (kappa^4 * M0 + 2 * kappa^2 * M1 + M2))
   expect_equal(Q, Q_ref, tolerance = 1e-8, ignore_attr = TRUE)
 })
 
@@ -41,7 +45,9 @@ test_that("ngvb and ng.check run on a stack-based SPDE fit (APredictor indexing)
   skip_on_cran(); skip_if_not_installed("INLA"); skip_if_not_installed("fmesher")
   set.seed(1); n <- 60; loc <- matrix(runif(n * 2), n, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.25, 0.5), cutoff = 0.08)
-  spde <- INLA::inla.spde2.matern(mesh); A <- fmesher::fm_basis(mesh, loc)
+  spde <- INLA::inla.spde2.pcmatern(mesh, prior.range = c(0.3, 0.5),
+                                    prior.sigma = c(1, 0.01))
+  A <- fmesher::fm_basis(mesh, loc)
   y <- as.numeric(A %*% rnorm(mesh$n, sd = 1.5)) + rnorm(n, sd = 0.2)
   stk <- INLA::inla.stack(data = list(y = y), A = list(A), effects = list(s = 1:mesh$n), tag = "e")
   LGM <- INLA::inla(y ~ -1 + f(s, model = spde), data = INLA::inla.stack.data(stk),

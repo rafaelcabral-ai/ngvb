@@ -60,7 +60,7 @@ rebuild the operator. No arguments are needed for the auto-detected models:
 | Random walks | `"rw1"`, `"rw2"` | auto |
 | Autoregressive order 1 | `"ar1"` | auto |
 | Intrinsic CAR (areal) | `"besag"` | auto (graph recovered) |
-| Matérn / SPDE | `inla.spde2.matern(mesh)` | auto (read from the fit) |
+| Matérn / SPDE | `inla.spde2.pcmatern(mesh, prior.range =, prior.sigma =)` | auto (read from the fit) |
 | Seasonal | `"seasonal"` | auto |
 | Structure matrix | `"generic0"` | `ngvb_operator("generic0", C = )` |
 | SAR, proper CAR, OU, AR(p) | — | `ngvb_operator()` / `ngvb_custom()` |

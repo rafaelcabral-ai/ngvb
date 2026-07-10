@@ -11,7 +11,11 @@ ngvb_operator(type, ...)
 `"car"`, `"spde"`, `"ou"`, `"seasonal"`, `"generic0"`.}
 
 \item{...}{Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
-`spde` for spde, `loc` for ou).}
+`loc` for ou). For `"spde"`, pass `spde = INLA::inla.spde2.pcmatern(mesh,
+prior.range = , prior.sigma = )` (or `mesh` + `prior.range` + `prior.sigma`
+and ngvb2 builds it); the non-Gaussian SPDE uses that PC prior on the
+practical range and marginal SD. Plain `inla.spde2.matern()` fields are
+rejected — only the PC-prior parameterization is supported.}
 }
 \value{
 An operator descriptor: a list with `Dfunc(theta)`, the constant
