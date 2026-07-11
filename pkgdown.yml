@@ -1,0 +1,9 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  ngvb: ngvb.html
+last_built: 2026-07-11T13:53Z
+urls:
+  reference: https://rafaelcabral-ai.github.io/ngvb/reference
+  article: https://rafaelcabral-ai.github.io/ngvb/articles
