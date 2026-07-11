@@ -8,27 +8,18 @@
 [![JRSS-B 2025](https://img.shields.io/badge/JRSS--B%202025-Model%20checking-b31b1b.svg)](https://doi.org/10.1093/jrsssb/qkae107)
 <!-- badges: end -->
 
-**ngvb** — non-Gaussian variational Bayes — is a ground-up rebuild of
-[`ngvb`](https://github.com/rafaelcabral96/ngvb) (formerly published here as `ngvb2`) on top of
-R-INLA.
-
-`ngvb` takes an ordinary R-INLA latent *Gaussian* model, **checks** whether the Gaussian
-assumption is adequate, and **extends** it to a latent *non-Gaussian* model, each in one line.
+**ngvb** (non-Gaussian variational Bayes) takes an ordinary R-INLA latent *Gaussian* model (LGM), **checks** whether the latent Gaussian
+assumption is adequate, and **extends** it to a latent *non-Gaussian* model (LnGM), each in one line.
 
 ```r
 LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = TRUE))
 
 ng.check(LGM)       # is the latent Gaussian assumption adequate, and where not?
 LnGM <- ngvb(LGM)   # fit the non-Gaussian extension
-bayes.factor(LnGM)  # how much better is it, with V integrated out?
-```
 
-For posterior summaries with `V` integrated out (not just the point estimate `ngvb()` returns), sample the mixing variables and refit at each draw:
-
-```r
-samples <- ngvb_sample(LnGM, n.samples = 30)
-bayes.factor(samples)               # LnGM vs. LGM marginal-likelihood ratio
-summary(samples)                    # importance-weighted fixed effects + hyperparameters
+samples <- ngvb_sample(LnGM, n.samples = 30) # sample the non-gaussian mixing variables V from their variational posterior and fit several R-INLA models
+bayes.factor(samples)               # how much better the LnGM is, with V integrated out?
+summary(samples)                    # importance-weighted summairies of fixed effects + hyperparameters of the LnGM
 ```
 
 ## Installation
