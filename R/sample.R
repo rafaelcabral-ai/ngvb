@@ -153,31 +153,15 @@ print.ngvb.samples <- function(x, ...) {
   invisible(x)
 }
 
-#' Importance-weighted posterior summary of the sampled fits.
-#'
-#' Pools a chosen INLA summary across the sampled fits with the importance
-#' weights, giving posterior means and standard deviations for the latent
-#' non-Gaussian model (with `V` integrated out), plus the Bayes factor.
-#'
-#' @param object An `ngvb.samples` object.
-#' @param what Which INLA summary to pool: `"fixed"` (default) or `"hyperpar"`.
-#' @param ... Ignored.
-#' @return A data frame of importance-weighted posterior means and standard
-#'   deviations (invisibly); called for the summary it prints.
-#' @method summary ngvb.samples
-#' @export
-summary.ngvb.samples <- function(object, what = c("fixed", "hyperpar"), ...) {
-  what <- match.arg(what)
-  bf <- bayes.factor(object)
-  cat("Latent non-Gaussian model, V integrated out over", object$n.samples, "draws\n")
-  cat(sprintf("Bayes factor vs Gaussian model: %.3g (log10 = %.2f), weight ESS %.1f\n\n",
-              bf$BF, bf$log10BF, bf$ess))
-  ## normalized importance weights (marginal-likelihood weighted)
-  lw <- object$logm + object$logw; w <- exp(lw - max(lw)); w <- w / sum(w)
-  key <- if (what == "fixed") "summary.fixed" else "summary.hyperpar"
+## Pool one INLA summary table (`"summary.fixed"` or `"summary.hyperpar"`)
+## across the sampled fits with the normalized importance weights `w`.
+## Returns NULL if that table is absent/empty in every draw (e.g. "fixed" on
+## a model with no fixed effects) rather than erroring.
+#' @keywords internal
+.pool_ngvb_summary <- function(object, w, key) {
   tabs <- lapply(object$fits, function(f) f[[key]])
   ok <- !vapply(tabs, is.null, logical(1)) & vapply(tabs, function(t) nrow(t) > 0, logical(1))
-  if (!any(ok)) { cat("(no", what, "effects)\n"); return(invisible(object)) }
+  if (!any(ok)) return(NULL)
   rn <- rownames(tabs[[which(ok)[1]]])
   mean.mat <- vapply(tabs[ok], function(t) t[rn, "mean"], numeric(length(rn)))
   sd.mat   <- vapply(tabs[ok], function(t) t[rn, "sd"],   numeric(length(rn)))
@@ -185,8 +169,55 @@ summary.ngvb.samples <- function(object, what = c("fixed", "hyperpar"), ...) {
   pooled.mean <- as.numeric(mean.mat %*% ww)
   ## law of total variance across the mixture of fits
   pooled.var  <- as.numeric((sd.mat^2 + mean.mat^2) %*% ww) - pooled.mean^2
-  res <- data.frame(mean = round(pooled.mean, 4), sd = round(sqrt(pmax(0, pooled.var)), 4),
-                    row.names = rn)
+  data.frame(mean = round(pooled.mean, 4), sd = round(sqrt(pmax(0, pooled.var)), 4),
+             row.names = rn)
+}
+
+#' Importance-weighted posterior summary of the sampled fits.
+#'
+#' Pools a chosen INLA summary across the sampled fits with the importance
+#' weights, giving posterior means and standard deviations for the latent
+#' non-Gaussian model (with `V` integrated out), plus the Bayes factor.
+#'
+#' @param object An `ngvb.samples` object.
+#' @param what One of `"all"` (default), `"fixed"`, or `"hyperpar"` -- which
+#'   INLA summary table(s) to pool. `"all"` shows and returns both, silently
+#'   skipping either one that doesn't apply to this model (e.g. `"fixed"` on
+#'   a fixed-effect-free model). Run `args(summary.ngvb.samples)` or
+#'   `?summary.ngvb.samples` to see this list again.
+#' @param ... Ignored.
+#' @return Called for the summary it prints. Invisibly: a single data frame
+#'   of importance-weighted posterior means/sds for `what = "fixed"` or
+#'   `"hyperpar"`; for `"all"`, a list `list(fixed = , hyperpar = )` with
+#'   either element `NULL` if that table doesn't apply.
+#' @method summary ngvb.samples
+#' @export
+summary.ngvb.samples <- function(object, what = c("all", "fixed", "hyperpar"), ...) {
+  what <- match.arg(what)
+  bf <- bayes.factor(object)
+  cat("Latent non-Gaussian model, V integrated out over", object$n.samples, "draws\n")
+  cat(sprintf("Bayes factor vs Gaussian model: %.3g (log10 = %.2f), weight ESS %.1f\n\n",
+              bf$BF, bf$log10BF, bf$ess))
+  ## normalized importance weights (marginal-likelihood weighted)
+  lw <- object$logm + object$logw; w <- exp(lw - max(lw)); w <- w / sum(w)
+
+  show_one <- function(label, key) {
+    res <- .pool_ngvb_summary(object, w, key)
+    cat(label, ":\n", sep = "")
+    if (is.null(res)) cat("  (none)\n") else print(res)
+    cat("\n")
+    res
+  }
+
+  if (what == "all") {
+    res <- list(fixed = show_one("Fixed effects", "summary.fixed"),
+               hyperpar = show_one("Hyperparameters", "summary.hyperpar"))
+    return(invisible(res))
+  }
+
+  key <- if (what == "fixed") "summary.fixed" else "summary.hyperpar"
+  res <- .pool_ngvb_summary(object, w, key)
+  if (is.null(res)) { cat("(no", what, "effects)\n"); return(invisible(res)) }
   print(res)
   invisible(res)
 }

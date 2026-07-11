@@ -4,18 +4,24 @@
 \alias{summary.ngvb.samples}
 \title{Importance-weighted posterior summary of the sampled fits.}
 \usage{
-\method{summary}{ngvb.samples}(object, what = c("fixed", "hyperpar"), ...)
+\method{summary}{ngvb.samples}(object, what = c("all", "fixed", "hyperpar"), ...)
 }
 \arguments{
 \item{object}{An `ngvb.samples` object.}
 
-\item{what}{Which INLA summary to pool: `"fixed"` (default) or `"hyperpar"`.}
+\item{what}{One of `"all"` (default), `"fixed"`, or `"hyperpar"` -- which
+INLA summary table(s) to pool. `"all"` shows and returns both, silently
+skipping either one that doesn't apply to this model (e.g. `"fixed"` on
+a fixed-effect-free model). Run `args(summary.ngvb.samples)` or
+`?summary.ngvb.samples` to see this list again.}
 
 \item{...}{Ignored.}
 }
 \value{
-A data frame of importance-weighted posterior means and standard
-  deviations (invisibly); called for the summary it prints.
+Called for the summary it prints. Invisibly: a single data frame
+  of importance-weighted posterior means/sds for `what = "fixed"` or
+  `"hyperpar"`; for `"all"`, a list `list(fixed = , hyperpar = )` with
+  either element `NULL` if that table doesn't apply.
 }
 \description{
 Pools a chosen INLA summary across the sampled fits with the importance

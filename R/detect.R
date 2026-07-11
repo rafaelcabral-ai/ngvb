@@ -104,7 +104,9 @@ ngvb_detect_operator <- function(fit, comp.name, user.op = NULL) {
   if (is.na(typ))
     stop("ngvb2: cannot auto-detect operator for '", comp.name,
          "' (model.random = '", mr, "'). Supply it via components = list(",
-         comp.name, " = ngvb_operator(...)).")
+         comp.name, " = ngvb_operator(...)). For any CAR-type component ",
+         "(non-positive off-diagonal precision) you can pass its structure ",
+         "matrix directly: ngvb_operator(\"from_Q\", Q = <structure>).")
   n <- nrow(fit$summary.random[[comp.name]])
   switch(typ,
     iid = ngvb_operator("iid", n = n),

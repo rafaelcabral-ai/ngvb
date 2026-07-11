@@ -2,6 +2,10 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/pkgdown.yaml/badge.svg)](https://rafaelcabral-ai.github.io/ngvb2/)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![JASA 2024](https://img.shields.io/badge/JASA%202024-VB%20%2B%20Laplace-b31b1b.svg)](https://doi.org/10.1080/01621459.2023.2296704)
+[![JRSS-B 2025](https://img.shields.io/badge/JRSS--B%202025-Model%20checking-b31b1b.svg)](https://doi.org/10.1093/jrsssb/qkae107)
 <!-- badges: end -->
 
 **Latent non-Gaussian modelling with R-INLA and variational Bayes.** A rebuild of
@@ -16,6 +20,14 @@ LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = T
 ng.check(LGM)       # is the latent Gaussian assumption adequate, and where not?
 LnGM <- ngvb(LGM)   # fit the non-Gaussian extension
 bayes.factor(LnGM)  # how much better is it, with V integrated out?
+```
+
+For posterior summaries with `V` integrated out (not just the point estimate `ngvb()` returns), sample the mixing variables and refit at each draw:
+
+```r
+samples <- ngvb_sample(LnGM, n.samples = 30)
+bayes.factor(samples)               # LnGM vs. LGM marginal-likelihood ratio
+summary(samples)                    # importance-weighted fixed effects + hyperparameters
 ```
 
 ## Installation
@@ -62,16 +74,22 @@ rebuild the operator. No arguments are needed for the auto-detected models:
 | Intrinsic CAR (areal) | `"besag"` | auto (graph recovered) |
 | Matérn / SPDE | `inla.spde2.pcmatern(mesh, prior.range =, prior.sigma =)` | auto (read from the fit) |
 | Seasonal | `"seasonal"` | auto |
-| Structure matrix | `"generic0"` | `ngvb_operator("generic0", C = )` |
-| SAR, proper CAR, OU, AR(p) | — | `ngvb_operator()` / `ngvb_custom()` |
-| Your own precision | — | `ngvb_custom(D, h, ...)` |
+| Structure matrix (any PSD `Cmatrix`) | `"generic0"` | `ngvb_operator("generic0", C = )` |
+| Any CAR-type precision `Q` (non-positive off-diagonals) | — | `ngvb_operator("from_Q", Q = )` |
+| SAR, proper CAR, OU | — | `ngvb_operator()` / `ngvb_custom()` |
+| Your own precision, or borrowed from [ngme2](https://davidbolin.github.io/ngme2/) | — | `ngvb_custom(D, h, ...)` |
 
 Additive models just work: each `f()` term gets its own mixing variables and non-Gaussianity
-parameter, all fit jointly.
+parameter, all fit jointly. `from_Q` covers the whole conditional-autoregression class (i.i.d.,
+random walk, ICAR, proper CAR) with one canonical dependency-matrix factorization, so it's the
+right fallback for a CAR-type component that isn't in the table above; models with positive
+off-diagonal precision entries (RW2, AR(*p* > 1), SPDE) need their dedicated operator instead.
 
-A `pc.prec` or `loggamma` **precision prior** you set on a component (`f(s, …, hyper = list(prec = …))`)
-is carried into the non-Gaussian fit; other prior families are dropped with a warning, in which case
-set the prior explicitly via `components = list(s = ngvb_operator(…, pc.prec = c(U = , alpha = )))`.
+A `pc.prec`, `loggamma`, or `normal` **precision prior** you set on a component (`f(s, …, hyper = list(prec = …))`)
+is carried into the non-Gaussian fit — including INLA's own default prior if you didn't set one —
+so the LnGM is the exact non-Gaussian extension of the LGM you fitted; other prior families are
+dropped with a warning, in which case set the prior explicitly via
+`components = list(s = ngvb_operator(…, pc.prec = c(U = , alpha = )))`.
 
 ## Documentation
 
@@ -81,7 +99,8 @@ worked examples across time series, areal, geostatistical and custom models, and
 
 ## References
 
-- Cabral, Bolin & Rue (2024). *Fitting latent non-Gaussian models using variational Bayes and
-  Laplace approximations.* (the `ngvb` method)
-- Cabral, Bolin & Rue (2025). *Robustness, model checking, and hierarchical models.* JRSS-B
-  87(3):632–652. (the `ng.check` diagnostic)
+- Cabral, Bolin & Rue (2024). [*Fitting latent non-Gaussian models using variational Bayes and
+  Laplace approximations.*](https://doi.org/10.1080/01621459.2023.2296704) JASA 119(548):2983–2995.
+  (the `ngvb` method)
+- Cabral, Bolin & Rue (2025). [*Robustness, model checking, and hierarchical models.*](https://doi.org/10.1093/jrsssb/qkae107)
+  JRSS-B 87(3):632–652. (the `ng.check` diagnostic)

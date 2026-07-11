@@ -1,3 +1,33 @@
+# ngvb2 0.1.1 (development)
+
+## Prior carry-over rebuilt on `fit$all.hyper` (breaking behavior fix)
+* The precision prior of each selected component is now read from
+  `fit$all.hyper$random` — INLA's own normalized record of the prior it
+  actually used — instead of re-parsing the model formula. The old
+  formula-based extraction **silently fell back to the operator's default PC
+  prior whenever `ngvb()` was called from inside a function** (the `hyper=`
+  argument no longer resolved in the stored formula environment), producing
+  fits that ignored the user's prior with no warning. The all.hyper path has
+  no such failure mode, and every remaining fallback now warns.
+* Because `all.hyper` also records INLA's *default* priors, an LGM fitted with
+  no explicit `hyper=` now carries INLA's default precision prior (e.g. iid's
+  `loggamma(1, 5e-5)`) into the LnGM, instead of ngvb's own `pc.prec(1, 0.01)`
+  default — the LnGM is now always the exact non-Gaussian extension of the LGM
+  as fitted.
+* The `normal` (Gaussian-on-log-precision) prior family is now carried over,
+  in addition to `pc.prec` and `loggamma`.
+
+## New operator: `from_Q`
+* `ngvb_operator("from_Q", Q = )` factors any M-matrix structure (symmetric
+  PSD, non-positive off-diagonals: iid/rw1/ICAR/proper-CAR class) canonically
+  as `Q = D^T D` via the signed-incidence decomposition — one increment per
+  conditional-dependency edge plus one anchor per positive row-sum excess, so
+  heavy tails land on the field's conditional differences. Exactness
+  (`D^T D = Q`) is verified at construction; rank deficiency is derived from
+  the unanchored connected components. Precisions outside the M-matrix class
+  (rw2, AR(p>1), SPDE), where no canonical decomposition exists, are refused
+  with an explanation rather than guessed at.
+
 # ngvb2 0.1.0
 
 First release: a rebuild of `ngvb` on top of R-INLA. INLA is a `Suggests`

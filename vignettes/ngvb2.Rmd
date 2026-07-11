@@ -39,8 +39,8 @@ library(INLA)     # ngvb2 uses INLA as a backend; attach it to call inla() direc
 
 A latent Gaussian model (LGM), the workhorse of R-INLA, places a Gaussian prior on a
 latent field: a random walk, an autoregression, a spatial effect, or a set of random
-effects. That prior is convenient but rigid, because it assumes the same variability
-everywhere. Real data often break the assumption in just a few places, such as a sudden
+effects. That prior is convenient but rigid, because it assumes Gaussianity everywhere
+everywhere. Real data often break this assumption in just a few places, such as a sudden
 jump in a time series, one outlying subject, a sharp boundary between regions, or a local
 hotspot in space. A Gaussian model then has to compromise. It either over-smooths the
 interesting feature or inflates the variance everywhere to accommodate it.
@@ -56,8 +56,7 @@ fit that was run with `control.compute = list(config = TRUE)`:
 
 Both auto-detect the models in your fit. Out of the box that covers `iid` random effects,
 random walks `rw1` and `rw2`, autoregressions `ar1`, intrinsic areal models `besag`, and
-Matern (`SPDE`) fields. Anything else, including a user-supplied structure matrix through
-`generic0`, is supplied through `ngvb_operator()` / `ngvb_custom()`, described in the last
+Matern (`SPDE`) fields. Anything else is supplied through `ngvb_operator()` / `ngvb_custom()`, described in the last
 section.
 
 Every example below follows the same short recipe: plot the data, write down the model,
@@ -96,22 +95,9 @@ can over-shrink a weak yet genuine effect all the way to the Gaussian model. The
 when the signal is strong or clearly absent, and they disagree in the weak-signal regime, so
 prefer SVI unless you have checked that SCVI gives the same answer on your problem.
 
-There is one more thing worth knowing before the examples. The conditional precision
-$\mathbf Q=\tau\,\mathbf D_0^\top\mathrm{diag}(1/\mathbf V)\mathbf D_0$ is exactly invariant
-under $(\tau,\mathbf V)\mapsto(c\tau,c\mathbf V)$, meaning the overall scale can be carried
-either by the precision $\tau$ or by the mixing variables. Nothing in the data distinguishes
-the two, only the prior does, so on weak or homogeneous signal the loop can drift along that
-flat ridge, let $\mathbf V$ absorb the scale, and inflate $\eta$ spuriously. `ngvb()` closes
-the ridge by default with `identify.scale = TRUE`, which re-anchors each component's
-discrepancies every iteration so their total matches the Gaussian total. That pins the scale
-to $\tau$ and leaves $\eta$ to respond only to the relative pattern of the increments, which
-is the genuine-outlier information it should measure. Well-scaled fits are left essentially
-untouched.
-
 # Which models and likelihoods are supported
 
-Running `inla.list.models()` prints everything R-INLA offers: dozens of latent model
-components under `[latent]`, and a long list of `[likelihood]` families. The non-Gaussianity
+The non-Gaussianity
 in `ngvb2` lives entirely in the latent field, on its driving noise, and never touches the
 observation model. So **every INLA likelihood is available**: Gaussian, Poisson, binomial,
 negative binomial, survival families, and the rest all work unchanged. You just fit your LGM
@@ -127,12 +113,8 @@ independent noise, so it has the dependency matrix $\mathbf D$ the method needs.
 **Added by hand.** Some models are not auto-detected but are still of the operator form, so
 you build them with `ngvb_operator()` or `ngvb_custom()` and pass them through `components`.
 This covers the simultaneous autoregression (`sar`), a proper row-standardised CAR (`car`),
-the Ornstein-Uhlenbeck process (`ou`), and AR($p$). The `generic0` route is the general escape
-hatch: a Gaussian component whose precision is a fixed structure matrix times a scale (for
-instance `crw2`, `rw2d`, `matern2d`, `dmatern`) is fit with
-`ngvb_operator("generic0", C = <Cmatrix>)`. It is supplied by hand rather than auto-detected,
-because the `Cmatrix` must be positive semi-definite and an intrinsic (rank-deficient) `C`
-needs its own null-space constraints, which you state explicitly.
+the Ornstein-Uhlenbeck process (`ou`), and `from_Q` -- any CAR-type precision matrix with
+non-positive off-diagonals, factored automatically into its dependency matrix.
 
 **Not compatible.** Some components are not a single operator applied to one field, and the
 method does not apply to them. The main cases are the additive spatial models `bym`, `bym2`,
@@ -142,6 +124,10 @@ the measurement-error models `mec`, `meb`, and the nonlinear-covariate effects `
 `revsigm`, `log1exp`, `logdist`. For an additive model such as `bym`, the practical fix is to
 split it into its `besag` and `iid` parts as two separate `f()` terms, which `ngvb()` then
 extends jointly.
+
+Priors carry over the same way: `pc.prec`, `loggamma`, and `normal` precision priors on the
+original `f()` term are read from the fit and reused automatically; anything else falls back
+to a default prior with a warning.
 
 # A time series with jumps
 
@@ -179,7 +165,7 @@ line) against the distribution it would have under a truly Gaussian field (the g
 The observed value sits far out in the tail, with $p\approx0$, so the Gaussian RW1 is
 inadequate and we know exactly where.
 
-Extend it. The model is auto-detected, so this is a single call:
+Now we extend it to non-Gaussianity. The model is auto-detected, so this is a single call:
 
 ```{r rw1-fit, fig.height = 6}
 LnGM <- ngvb(LGM)
@@ -188,24 +174,17 @@ plot(LnGM)
 
 For each component the plot shows the mixing weights $V_i/h_i$ (the posterior mean with a
 90 percent credible interval, and a cross at the plug-in value $1/E[1/V_i]$ that INLA is
-actually refit with, which sits a little below the mean because $q(V_i)$ is right-skewed),
-next to the posterior density of $\eta$ (mean solid, median dashed). The final panel tracks
+actually refit with, which sits a little below the mean because $q(V_i)$ is right-skewed). The final panel tracks
 $E[\eta]$ across the iterations. The mixing variables are inflated precisely at the two
 jumps and sit near one elsewhere, so the model bought local flexibility exactly where it was
-needed and stayed Gaussian in between. The non-Gaussianity parameter is clearly positive:
+needed and stayed Gaussian in between. The non-Gaussianity parameter is clearly positive.
 
-```{r rw1-eta}
-LnGM$eta
-```
-
-How much better is the non-Gaussian model overall? We answer that with a Bayes factor.
-`ngvb_sample()` draws the mixing vector $\mathbf V$ from its posterior, refits INLA at each
-draw, and `bayes.factor()` compares the marginal likelihood of the non-Gaussian model against
-the Gaussian one with $\mathbf V$ integrated out rather than fixed at a plug-in value. Because
-$\mathbf V$ is averaged over, the comparison stays honest even at small sample sizes.
+Beyond the point estimate, you can integrate the mixing variables V out entirely by sampling from their variational posterior and refitting the LGM at each draw — this gives the Bayes factor against the Gaussian model, and, pooled with importance weights, posterior summaries of anything the underlying inla() fit reports:
 
 ```{r rw1-bf}
-bayes.factor(LnGM, n.samples = 30, seed = 1)
+samples <- ngvb_sample(LnGM, n.samples = 30)
+bayes.factor(samples)               # LnGM vs. LGM marginal-likelihood ratio
+summary(samples, what = "hyperpar") # importance-weighted fixed-effect means/sds, V integrated out
 ```
 
 On the usual scale a $\log_{10}$ Bayes factor above $0.5$, $1$, or $2$ is substantial, strong,
@@ -218,8 +197,17 @@ or decisive evidence for the non-Gaussian model. Here it is far into the decisiv
 `Orthodont` records a growth measurement for 27 children at four ages, together with a sex
 indicator and time coded two ways. A quick look at the raw data frame:
 
-```{r ortho-data, fig.height = 5}
-plot(Orthodont)
+```{r ortho-data, fig.height = 4}
+Orthodont$age <- c(8, 10, 12, 14)[Orthodont$time + 1]
+
+ggplot(Orthodont, aes(x = age, y = value)) +
+  geom_line(color = "#007fff") +
+  geom_point(shape = 1, color = "#007fff") +
+  scale_x_continuous(breaks = c(9, 11, 13)) + 
+  facet_wrap(~ ifelse(Female == 1, paste0("F", subject), paste0("M", subject)), ncol = 11) +
+  theme_bw() +
+  theme(panel.spacing = unit(0, "lines"),
+        strip.background = element_rect(fill = "#ffe5cc"))
 ```
 
 Two kinds of child-to-child variation matter here. Each child starts at a different height,
@@ -251,16 +239,14 @@ the few outliers stand out. `ng.check()` reports one diagnostic per component:
 ng.check(LGM, compute.fixed = FALSE)
 ```
 
+We see that no substancial evidence of non-Gaussianity was found (small $p$) for both random effects.
+
 ```{r ortho-ngvb, fig.height = 8.5}
 LnGM <- ngvb(LGM)
 plot(LnGM)
 ```
 
-```{r ortho-eta}
-LnGM$eta          # one non-Gaussianity parameter per component
-```
-
-The intercept carries more non-Gaussianity than the slope. A couple of children have
+After fitting the latent non-Gaussian model we see that the intercept carries more non-Gaussianity than the slope. A couple of children have
 outlying baselines, while the growth rates are close to Gaussian. Nothing was specified by
 hand: the prior on $\eta$ shrank the slope component back toward Gaussian on its own and
 left the intercept free to flag its outliers.
@@ -293,8 +279,13 @@ nb   <- poly2nb(map)
 Wadj <- Matrix::sparseMatrix(i = rep(seq_along(nb), lengths(nb)), j = unlist(nb), x = 1)
 
 LGM <- inla(CRIME ~ 1 + HOVAL + INC +
-              f(s, model = "besag", graph = Wadj, scale.model = TRUE),
+              f(s, model = "besag", graph = Wadj, scale.model = TRUE,
+                hyper = list(prec = list(prior = "loggamma", param = c(0.5, 0.01)))),
             data = d, control.compute = list(config = TRUE))
+```
+
+```{r}
+LGM$summary.hyperpar
 ```
 
 ```{r besag-check, eval = have_areal, fig.height = 3.4}
@@ -302,36 +293,13 @@ ng.check(LGM, compute.fixed = FALSE)   # areal model auto-detected
 ```
 
 The 118 edges of this graph all show a similarly small discrepancy from the Gaussian
-reference. Exactly one exceeds twice the median and none exceeds three times it, whereas one
-of the `jumpts` increments earlier was about 500 times its median. This field is essentially
-Gaussian, and there is no sharp boundary to find. It is also exactly the homogeneous pattern
-that could let $\eta$ and the precision run up together, so the scale-identifiability
-constraint (on by default) matters here. It holds the fit to the honest answer near
-$\eta\approx0.1$, with every mixing weight sitting at $\mathbf h$:
+reference. This field is essentially Gaussian, and both the previous checking procedure (`ng.check`) and the latent non-Gaussian fitting (`ngvb`) show that. 
 
-```{r besag-fit, eval = have_areal, fig.height = 6}
-LnGM <- ngvb(LGM)                        # identify.scale = TRUE by default
+```{r besag-fit, eval = have_areal, fig.height = 4}
+LnGM <- ngvb(LGM)
 plot(LnGM)
 ```
 
-```{r besag-eta, eval = have_areal}
-LnGM$eta                                # for besag, V lives on the graph edges
-```
-
-Turning the constraint off with `ngvb(LGM, identify.scale = FALSE)` would instead let $\eta$
-drift up to around three while pushing every edge weight below $\mathbf h$. That uniform
-shrinkage is the signature of a scale runaway rather than a real finding, and `ngvb()` would
-warn about it.
-
-For besag the mixing weights live on the graph edges, not the counties, so to see the spatial
-pattern we average the incident-edge weights $V_i/h_i$ onto each county and map that. As
-expected for this near-Gaussian field, the map is almost flat at one:
-
-```{r besag-map, eval = have_areal, fig.height = 4.2, fig.width = 5.5}
-inc      <- abs(LnGM$ops$s$Dfunc(LnGM$ops$s$theta.initial)) > 0   # edge-by-county incidence
-countyVh <- as.numeric(Matrix::t(inc) %*% (LnGM$V$s / LnGM$h$s)) / Matrix::colSums(inc)
-areal.plot(map, countyVh, title = "mean V/h")
-```
 
 ```{r besag-bf, eval = have_areal}
 bayes.factor(LnGM, n.samples = 30, seed = 1)
@@ -359,7 +327,9 @@ sharply. `ngvb2` reads $\mathbf D$ straight from the fitted `spde` object, so yo
 nothing extra.
 
 ```{r spde-inla, eval = have_fmesher}
-spde <- inla.spde2.matern(mesh, alpha = 2)
+spde <- inla.spde2.pcmatern(mesh, alpha = 2,
+                            prior.range = c(1, 0.5),    # P(range < 1) = 0.5
+                            prior.sigma = c(10, 0.1))   # P(sigma > 1) = 0.01
 A    <- inla.spde.make.A(mesh, loc = as.matrix(w[, c("lon", "lat")]))
 stk  <- inla.stack(tag = "est", data = list(y = w$press), A = list(A),
                    effects = list(s = 1:spde$n.spde))
@@ -370,16 +340,12 @@ LGM <- inla(y ~ -1 + f(s, model = spde), data = inla.stack.data(stk),
 ```
 
 ```{r spde-check, eval = have_fmesher, fig.height = 3.4}
-ng.check(LGM, compute.fixed = FALSE)   # SPDE model recovered from the fitted object
+ng.check(LGM) 
 ```
 
 ```{r spde-fit, eval = have_fmesher, fig.height = 6}
-LnGM <- ngvb(LGM, verbose = FALSE)
+LnGM <- ngvb(LGM)
 plot(LnGM)
-```
-
-```{r spde-eta, eval = have_fmesher}
-LnGM$eta
 ```
 
 The mixing variables live on the mesh nodes, so we can map them back over space. We plot the
@@ -398,8 +364,11 @@ bayes.factor(LnGM, n.samples = 30, seed = 1)
 ```
 
 `ngvb2` recognises the SPDE component because its `f(...)` model is an object built by
-`inla.spde2.matern()`. It evaluates that argument from the fit's formula and reads the
-finite-element matrices back from it.
+`inla.spde2.pcmatern()`. It evaluates that argument from the fit's formula, reads the
+finite-element matrices back from it, and carries over the field's PC prior on the
+practical range and marginal standard deviation. Only the PC-prior parameterization is
+supported for the non-Gaussian SPDE; a field built with the older `inla.spde2.matern()`
+is rejected with a message to rebuild it with `inla.spde2.pcmatern()`.
 
 # Your own precision matrix with ngvb_custom
 
@@ -505,6 +474,23 @@ bayes.factor(LnGM, n.samples = 30, seed = 1)
 That is the whole custom interface. Give `ngvb_custom()` a function `D(theta)` and a vector
 `h`, optionally a prior and a normalizing constant, and any Gaussian model whose precision
 factors as $\mathbf D^\top\mathrm{diag}(1/\mathbf h)\mathbf D$ becomes a latent non-Gaussian
-one. This is also how you would reach the models listed as "added by hand" earlier, including
-the Ornstein-Uhlenbeck process and, through `generic0`, any component whose precision is a
-fixed structure matrix times a scale.
+one.
+
+# Using operators from the ngme2 package
+
+The [ngme2]( https://davidbolin.github.io/ngme2/) package is a good source of ready-made dependency matrices for models beyond ngvb2's own registry (general AR(p), tensor-product and bivariate operators among them). Its operator objects expose $K(theta_K)$, the dependency matrix D you need, as a function of a hyperparameter, and $h$. For an AR(1) field, for example:
+
+```{r}
+ngme_ar1 <- ngme2::ar1(1:N)
+
+op_ar1_ngme2 <- ngvb_custom(
+  D = function(theta) sqrt(exp(theta[1])) * ngme_ar1$update_K(theta[2]),
+  h        = ngme_ar1$h,
+  ntheta   = 2,
+  logprior = function(theta) {
+    stats::dnorm(theta[1], 0, 3, log = TRUE) +   # precision: your choice
+    stats::dnorm(theta[2], 0, 1, log = TRUE)     # matches ngme2's own prior_normal(0, 1) on theta_K
+  })
+```
+
+`theta[1]` is your own added precision hyperparameter; `theta[2]` is passed straight through to ngme2's `update_K`, which applies its own internal transform to it.

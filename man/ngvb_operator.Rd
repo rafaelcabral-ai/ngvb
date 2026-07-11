@@ -8,7 +8,11 @@ ngvb_operator(type, ...)
 }
 \arguments{
 \item{type}{Model type: one of `"iid"`, `"rw1"`, `"rw2"`, `"ar1"`, `"sar"`,
-`"car"`, `"spde"`, `"ou"`, `"seasonal"`, `"generic0"`.}
+`"car"`, `"spde"`, `"ou"`, `"seasonal"`, `"generic0"`, `"from_Q"`.
+`"from_Q"` takes any M-matrix structure `Q` (non-positive off-diagonals,
+e.g. any CAR-type precision) and factors it canonically as `Q = D^T D`
+with one increment per graph edge -- heavy tails then land on the
+conditional differences of the field.}
 
 \item{...}{Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
 `loc` for ou). For `"spde"`, pass `spde = INLA::inla.spde2.pcmatern(mesh,

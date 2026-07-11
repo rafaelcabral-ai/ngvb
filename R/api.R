@@ -260,11 +260,14 @@ ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SC
     cat("Components:", paste(sprintf("%s [%s]", comp.names, vapply(ops, `[[`, "", "type")),
                              collapse = ", "), "\n")
 
-  ## Carry a user's f() precision prior into the engine where we can (pc.prec /
-  ## loggamma), warning + falling back to the operator's default PC prior otherwise.
-  ## Skipped for components the user overrode via `components` -- there the operator
-  ## (and its pc.prec) is the explicit prior specification.
-  user.hyper <- ngvb_extract_f_hyper(fit$.args$formula, comp.names)
+  ## Carry the fit's precision prior into the engine where we can (pc.prec /
+  ## loggamma / normal), warning + falling back to the operator's default PC
+  ## prior otherwise. Read from fit$all.hyper -- INLA's normalized record of the
+  ## priors it actually used -- NOT from the formula, whose environment does not
+  ## survive being called from inside a function. Skipped for components the
+  ## user overrode via `components` -- there the operator (and its pc.prec) is
+  ## the explicit prior specification.
+  user.hyper <- ngvb_hyper_from_fit(fit, comp.names)
   for (cn in comp.names)
     if (is.null(components[[cn]]))
       ops[[cn]] <- ngvb_apply_user_prec_prior(ops[[cn]], user.hyper[[cn]], cn, verbose)
