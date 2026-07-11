@@ -27,6 +27,8 @@ have_areal   <- all(vapply(c("spdep", "sf", "spData"), requireNamespace,
                 requireNamespace("INLA", quietly = TRUE)
 have_fmesher <- requireNamespace("fmesher", quietly = TRUE) &&
                 requireNamespace("INLA", quietly = TRUE)
+have_ngme2   <- requireNamespace("ngme2", quietly = TRUE) &&
+                requireNamespace("INLA", quietly = TRUE)
 set.seed(1)
 ```
 
@@ -480,7 +482,7 @@ one.
 
 The [ngme2]( https://davidbolin.github.io/ngme2/) package is a good source of ready-made dependency matrices for models beyond ngvb's own registry (general AR(p), tensor-product and bivariate operators among them). Its operator objects expose $K(theta_K)$, the dependency matrix D you need, as a function of a hyperparameter, and $h$. For an AR(1) field, for example:
 
-```{r}
+```{r ngme2-example, eval = have_ngme2}
 ngme_ar1 <- ngme2::ar1(1:N)
 
 op_ar1_ngme2 <- ngvb_custom(
