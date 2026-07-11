@@ -57,10 +57,20 @@ jobs:
       - name: Install INLA
         if: matrix.config.inla
         run: |
-          install.packages("INLA",
-            repos = c(getOption("repos"),
-                      INLA = "https://inla.r-inla-download.org/R/stable"),
-            dependencies = TRUE)
+          # The INLA download server is occasionally unreachable for a few
+          # minutes; retry a few times before giving up.
+          for (attempt in 1:3) {
+            ok <- tryCatch({
+              install.packages("INLA",
+                repos = c(getOption("repos"),
+                          INLA = "https://inla.r-inla-download.org/R/stable"),
+                dependencies = TRUE)
+              requireNamespace("INLA", quietly = TRUE)
+            }, error = function(e) FALSE)
+            if (isTRUE(ok)) break
+            message("INLA install attempt ", attempt, " failed, retrying...")
+            Sys.sleep(60)
+          }
           stopifnot(requireNamespace("INLA", quietly = TRUE))
         shell: Rscript {0}
 
