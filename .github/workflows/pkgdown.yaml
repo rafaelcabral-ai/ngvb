@@ -1,7 +1,7 @@
-# Build the pkgdown site and deploy it to GitHub Pages on every push to main.
+# Build the pkgdown site and deploy it to GitHub Pages.
+# Manual/release-triggered only (no push trigger) -- run it yourself via the
+# Actions tab's "Run workflow" button, or `gh workflow run pkgdown.yaml`.
 on:
-  push:
-    branches: [main, master]
   release:
     types: [published]
   workflow_dispatch:

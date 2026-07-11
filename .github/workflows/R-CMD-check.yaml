@@ -1,9 +1,9 @@
 # Multi-OS R CMD check. Runs on Linux, macOS and Windows.
 # Generated in the style of r-lib/actions; INLA is installed from its own repo
 # (it is not on CRAN) via the Additional_repositories field in DESCRIPTION.
+# Manual/PR-triggered only (no push trigger) -- run it yourself via the
+# Actions tab's "Run workflow" button, or `gh workflow run R-CMD-check.yaml`.
 on:
-  push:
-    branches: [main, master]
   pull_request:
   workflow_dispatch:
 
