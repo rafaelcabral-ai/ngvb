@@ -70,10 +70,10 @@ ngvb_recover_spde <- function(fit, comp.name) {
   frm   <- fit$.args$formula
   mexpr <- ngvb_find_f_model(frm, comp.name)
   if (is.null(mexpr))
-    stop("ngvb2: could not locate the model of SPDE component '", comp.name, "' in the formula.")
+    stop("ngvb: could not locate the model of SPDE component '", comp.name, "' in the formula.")
   obj <- tryCatch(eval(mexpr, environment(frm)), error = function(e) NULL)
   if (!inherits(obj, "inla.spde2"))
-    stop("ngvb2: could not recover the inla.spde2 object for '", comp.name,
+    stop("ngvb: could not recover the inla.spde2 object for '", comp.name,
          "' (it is not retained in the fit). Supply it via components = list(",
          comp.name, " = ngvb_operator('spde', spde = <your spde>)).")
   obj
@@ -98,11 +98,11 @@ ngvb_detect_operator <- function(fit, comp.name, user.op = NULL) {
   if (!is.null(user.op)) return(user.op)
   cn.all <- names(fit$summary.random)
   k  <- match(comp.name, cn.all)
-  if (is.na(k)) stop("ngvb2: component '", comp.name, "' not found among random effects.")
+  if (is.na(k)) stop("ngvb: component '", comp.name, "' not found among random effects.")
   mr  <- fit$model.random[k]
   typ <- unname(.ngvb_model_map[mr])
   if (is.na(typ))
-    stop("ngvb2: cannot auto-detect operator for '", comp.name,
+    stop("ngvb: cannot auto-detect operator for '", comp.name,
          "' (model.random = '", mr, "'). Supply it via components = list(",
          comp.name, " = ngvb_operator(...)). For any CAR-type component ",
          "(non-positive off-diagonal precision) you can pass its structure ",
@@ -117,7 +117,7 @@ ngvb_detect_operator <- function(fit, comp.name, user.op = NULL) {
     spde = ngvb_operator("spde", spde = ngvb_recover_spde(fit, comp.name)),
     seasonal = {
       s <- ngvb_find_f_arg(fit, comp.name, "season.length")
-      if (is.null(s)) stop("ngvb2: could not recover season.length for '", comp.name,
+      if (is.null(s)) stop("ngvb: could not recover season.length for '", comp.name,
                            "'. Supply components = list(", comp.name,
                            " = ngvb_operator('seasonal', n = ", n, ", season = <s>)).")
       ngvb_operator("seasonal", n = n, season = as.integer(s))

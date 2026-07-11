@@ -1,5 +1,5 @@
 ## ---------------------------------------------------------------------------
-## ngvb2 unified latent engine (rgeneric).
+## ngvb unified latent engine (rgeneric).
 ##
 ## A single custom INLA latent model whose precision conditioned on the mixing
 ## vector V is

@@ -11,7 +11,7 @@
 
 #' @export
 print.ngvb <- function(x, ...) {
-  cat("Latent non-Gaussian model fit (ngvb2)\n")
+  cat("Latent non-Gaussian model fit (ngvb)\n")
   cat("  components:", paste(sprintf("%s [%s]", x$comp.names,
                                      vapply(x$ops, `[[`, "", "type")), collapse = ", "), "\n")
   cat("  iterations:", x$iterations, "\n")
@@ -33,7 +33,7 @@ print.ngvb <- function(x, ...) {
 #' @method summary ngvb
 #' @export
 summary.ngvb <- function(object, n.flag = 5, ...) {
-  cat("Latent non-Gaussian model (ngvb2)\n\n")
+  cat("Latent non-Gaussian model (ngvb)\n\n")
   cat("Fixed effects:\n"); print(round(object$fit$summary.fixed, 4))
   cat("\nNon-Gaussianity -- eta: mean (median) [90% CI]:\n")
   for (cn in object$comp.names) {

@@ -2,11 +2,11 @@
 % Please edit documentation in R/plotfunctions.R
 \name{ngvb_theme}
 \alias{ngvb_theme}
-\title{A shared, recessive ggplot theme for the ngvb2 plots.}
+\title{A shared, recessive ggplot theme for the ngvb plots.}
 \usage{
 ngvb_theme(base = 12)
 }
 \description{
-A shared, recessive ggplot theme for the ngvb2 plots.
+A shared, recessive ggplot theme for the ngvb plots.
 }
 \keyword{internal}

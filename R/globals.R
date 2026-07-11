@@ -11,7 +11,7 @@ utils::globalVariables(c("Dfunc", "Vinv", "rankdef", "graph.pattern",
 #' @keywords internal
 .need_inla <- function() {
   if (!requireNamespace("INLA", quietly = TRUE))
-    stop("ngvb2 requires the 'INLA' package, which is not on CRAN. Install it with:\n",
+    stop("ngvb requires the 'INLA' package, which is not on CRAN. Install it with:\n",
          "  install.packages('INLA', repos = c(getOption('repos'),\n",
          "                    INLA = 'https://inla.r-inla-download.org/R/stable'), dep = TRUE)",
          call. = FALSE)

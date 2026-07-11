@@ -1,5 +1,5 @@
 ---
-title: "Latent non-Gaussian models with ngvb2"
+title: "Latent non-Gaussian models with ngvb"
 output:
   html_document:
     toc: true
@@ -11,7 +11,7 @@ output:
       bootswatch: flatly
   rmarkdown::html_vignette: default
 vignette: >
-  %\VignetteIndexEntry{Latent non-Gaussian models with ngvb2}
+  %\VignetteIndexEntry{Latent non-Gaussian models with ngvb}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -31,8 +31,8 @@ set.seed(1)
 ```
 
 ```{r lib}
-library(ngvb2)
-library(INLA)     # ngvb2 uses INLA as a backend; attach it to call inla() directly
+library(ngvb)
+library(INLA)     # ngvb uses INLA as a backend; attach it to call inla() directly
 ```
 
 # Overview
@@ -45,7 +45,7 @@ jump in a time series, one outlying subject, a sharp boundary between regions, o
 hotspot in space. A Gaussian model then has to compromise. It either over-smooths the
 interesting feature or inflates the variance everywhere to accommodate it.
 
-`ngvb2` relaxes that single assumption. It keeps everything you already have, the same
+`ngvb` relaxes that single assumption. It keeps everything you already have, the same
 INLA model and the same code, and replaces the Gaussian driving noise with a heavier-tailed
 one. The result adds flexibility only where the data ask for it and falls back to the
 Gaussian model everywhere else. Two functions do the work, and both take an ordinary `inla`
@@ -81,7 +81,7 @@ $\mathbf h$, and $\eta=0$ is exactly the Gaussian model. Conditional on $\mathbf
 field is still Gaussian, with precision
 $$\mathbf Q(\boldsymbol\theta,\mathbf V)=\mathbf D(\boldsymbol\theta)^\top\,
    \mathrm{diag}(1/\mathbf V)\,\mathbf D(\boldsymbol\theta).$$
-`ngvb2` fits the model with a short variational-Bayes loop that repeatedly calls INLA with
+`ngvb` fits the model with a short variational-Bayes loop that repeatedly calls INLA with
 $\mathbf V$ fixed and then updates $\mathbf V$ and $\eta$. The prior on $\eta$ is an
 exponential (a penalised-complexity prior with rate `alpha.eta`, default $2$) that shrinks
 toward the Gaussian model, so non-Gaussianity has to earn its place. Increase `alpha.eta`
@@ -98,7 +98,7 @@ prefer SVI unless you have checked that SCVI gives the same answer on your probl
 # Which models and likelihoods are supported
 
 The non-Gaussianity
-in `ngvb2` lives entirely in the latent field, on its driving noise, and never touches the
+in `ngvb` lives entirely in the latent field, on its driving noise, and never touches the
 observation model. So **every INLA likelihood is available**: Gaussian, Poisson, binomial,
 negative binomial, survival families, and the rest all work unchanged. You just fit your LGM
 as usual and hand it to `ng.check()` or `ngvb()`.
@@ -311,7 +311,7 @@ bayes.factor(LnGM, n.samples = 30, seed = 1)
 Northwest. Build the mesh first and plot the stations over it:
 
 ```{r spde-data, eval = have_fmesher, fig.height = 4.2, fig.width = 5.5}
-w    <- read.csv(system.file("extdata", "weatherdata.csv", package = "ngvb2"))
+w    <- read.csv(system.file("extdata", "weatherdata.csv", package = "ngvb"))
 mesh <- inla.mesh.2d(loc = w[, c("lon", "lat")], max.edge = c(1.5, 2.5),
                      cutoff = 0.3, max.n.strict = 400)
 geo.plot(w[, c("lon", "lat", "press")], mesh = mesh, title = "pressure",
@@ -323,7 +323,7 @@ for point-referenced spatial data. The field solves a stochastic PDE whose finit
 form gives the operator $\mathbf D=\kappa^2\mathbf C+\mathbf G$, where $\mathbf C$ and
 $\mathbf G$ are the mass and stiffness matrices of the mesh. A Gaussian Matern smooths the
 whole surface uniformly, while the non-Gaussian version lets a few locations depart more
-sharply. `ngvb2` reads $\mathbf D$ straight from the fitted `spde` object, so you pass
+sharply. `ngvb` reads $\mathbf D$ straight from the fitted `spde` object, so you pass
 nothing extra.
 
 ```{r spde-inla, eval = have_fmesher}
@@ -363,7 +363,7 @@ geo.plot(nodes, mesh = mesh, title = "V/h")
 bayes.factor(LnGM, n.samples = 30, seed = 1)
 ```
 
-`ngvb2` recognises the SPDE component because its `f(...)` model is an object built by
+`ngvb` recognises the SPDE component because its `f(...)` model is an object built by
 `inla.spde2.pcmatern()`. It evaluates that argument from the fit's formula, reads the
 finite-element matrices back from it, and carries over the field's PC prior on the
 practical range and marginal standard deviation. Only the PC-prior parameterization is
@@ -478,7 +478,7 @@ one.
 
 # Using operators from the ngme2 package
 
-The [ngme2]( https://davidbolin.github.io/ngme2/) package is a good source of ready-made dependency matrices for models beyond ngvb2's own registry (general AR(p), tensor-product and bivariate operators among them). Its operator objects expose $K(theta_K)$, the dependency matrix D you need, as a function of a hyperparameter, and $h$. For an AR(1) field, for example:
+The [ngme2]( https://davidbolin.github.io/ngme2/) package is a good source of ready-made dependency matrices for models beyond ngvb's own registry (general AR(p), tensor-product and bivariate operators among them). Its operator objects expose $K(theta_K)$, the dependency matrix D you need, as a function of a hyperparameter, and $h$. For an AR(1) field, for example:
 
 ```{r}
 ngme_ar1 <- ngme2::ar1(1:N)

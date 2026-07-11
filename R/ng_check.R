@@ -64,7 +64,7 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
                      plot = TRUE) {
   .need_inla()
   if (is.null(fit$misc$configs))
-    stop("ngvb2: refit the LGM with control.compute = list(config = TRUE).")
+    stop("ngvb: refit the LGM with control.compute = list(config = TRUE).")
   if (is.null(selection))
     selection <- lapply(fit$summary.random, function(x) seq_len(nrow(x)))
   comp.names <- names(selection)
@@ -213,7 +213,7 @@ plot.ngvb.check <- function(x, ...) {
 
 #' @export
 print.ngvb.check <- function(x, ...) {
-  cat("ngvb2 latent-Gaussianity check (at the hyperparameter posterior mode)\n")
+  cat("ngvb latent-Gaussianity check (at the hyperparameter posterior mode)\n")
   tab <- do.call(rbind, lapply(names(x$components), function(cn) {
     c <- x$components[[cn]]
     data.frame(component = cn, s0 = round(c$s0, 3),

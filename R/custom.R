@@ -1,5 +1,5 @@
 ## ---------------------------------------------------------------------------
-## Custom operators. The fundamental object in ngvb2 is an "operator" = a
+## Custom operators. The fundamental object in ngvb is an "operator" = a
 ## dependency matrix D(theta) plus a constant vector h. The latent field has
 ## conditional precision Q(V) = D(theta)^T diag(1/V) D(theta), with V = h giving
 ## the Gaussian base model Q = D^T diag(1/h) D. Built-in models are auto-detected;
@@ -77,7 +77,7 @@ ngvb_custom <- function(D, h = 1, ntheta, theta.initial = rep(0, ntheta),
   m  <- nrow(D0); n <- ncol(D0)
   if (length(h) == 1L) h <- rep(h, m)
   if (length(h) != m)
-    stop("ngvb2: h must have length nrow(D(theta)) = ", m, " (the number of noise terms).")
+    stop("ngvb: h must have length nrow(D(theta)) = ", m, " (the number of noise terms).")
   if (is.null(graph)) graph <- Matrix::crossprod(D0)
   ## make the user functions self-contained for the rgeneric subprocess
   op <- list(type = "custom", n = n, ntheta = as.integer(ntheta),

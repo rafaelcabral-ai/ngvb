@@ -1,4 +1,10 @@
-# ngvb2 0.1.1 (development)
+# ngvb 0.2.0
+
+## Package renamed from `ngvb2` to `ngvb`
+* The package (previously published here as `ngvb2`) is now `ngvb`, short for
+  non-Gaussian variational Bayes. Update `library(ngvb2)` calls to
+  `library(ngvb)`; `install_github()` calls to
+  `remotes::install_github("rafaelcabral-ai/ngvb")`.
 
 ## Prior carry-over rebuilt on `fit$all.hyper` (breaking behavior fix)
 * The precision prior of each selected component is now read from
@@ -28,7 +34,7 @@
   (rw2, AR(p>1), SPDE), where no canonical decomposition exists, are refused
   with an explanation rather than guessed at.
 
-# ngvb2 0.1.0
+# ngvb 0.1.0
 
 First release: a rebuild of `ngvb` on top of R-INLA. INLA is a `Suggests`
 dependency (installed from its own repository) so the package installs and

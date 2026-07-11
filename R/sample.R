@@ -56,7 +56,7 @@ ngvb_sample <- function(object, n.samples = 50, seed = NULL,
   .need_inla()
   stopifnot(inherits(object, "ngvb"))
   if (is.null(object$inla.fit.V))
-    stop("ngvb2: this ngvb object predates sampling support; refit with ngvb().")
+    stop("ngvb: this ngvb object predates sampling support; refit with ngvb().")
   if (!is.null(seed)) set.seed(seed)
   cn.all <- object$comp.names
   h  <- object$h; d <- object$d; eta <- object$eta

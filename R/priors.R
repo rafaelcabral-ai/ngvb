@@ -126,7 +126,7 @@ ngvb_apply_user_prec_prior <- function(op, hyper, comp.name, verbose = TRUE) {
     else warning(msg, call. = FALSE)
 
   if (is.null(hyper) || !length(hyper)) {
-    warn(sprintf(paste0("ngvb2: no hyperparameter record found for '%s' in the fit ",
+    warn(sprintf(paste0("ngvb: no hyperparameter record found for '%s' in the fit ",
                         "(fit$all.hyper); using the '%s' operator's default prior."),
                  comp.name, op$type))
     return(op)
@@ -141,12 +141,12 @@ ngvb_apply_user_prec_prior <- function(op, hyper, comp.name, verbose = TRUE) {
     ## secondary handling below still reports it. In an all.hyper record a
     ## missing precision entry is anomalous and deserves a warning.
     if (isTRUE(found$from.all.hyper))
-      warn(sprintf(paste0("ngvb2: could not identify a precision hyperparameter for '%s'; ",
+      warn(sprintf(paste0("ngvb: could not identify a precision hyperparameter for '%s'; ",
                           "using the '%s' operator's default prior."), comp.name, op$type))
   } else {
     map <- .prec_logprior_from_hyper(spec)
     if (is.null(op$prec.logprior)) {
-      warn(sprintf(paste0("ngvb2: a precision prior is set on '%s' in the fit, but the '%s' ",
+      warn(sprintf(paste0("ngvb: a precision prior is set on '%s' in the fit, but the '%s' ",
                           "engine is not parameterized by a single precision, so it cannot be ",
                           "carried over; using the operator's default prior."),
                    comp.name, op$type))
@@ -155,14 +155,14 @@ ngvb_apply_user_prec_prior <- function(op, hyper, comp.name, verbose = TRUE) {
       op$logprior      <- function(theta) base(theta) - old(theta[1L]) + new(theta[1L])
       op$prec.logprior <- new
       if (isTRUE(verbose))
-        message(sprintf("ngvb2: carried the %s precision prior from the INLA fit into component '%s'.",
+        message(sprintf("ngvb: carried the %s precision prior from the INLA fit into component '%s'.",
                         map$family, comp.name))
     } else {
       reason <- if (identical(map$family, "fixed"))
         "a fixed precision is not supported by the ngvb engine"
       else sprintf("the '%s' prior family is not one ngvb can map (pc.prec, loggamma, normal)",
                    if (is.null(map)) "unknown" else map$family)
-      warn(sprintf(paste0("ngvb2: the precision prior on '%s' was dropped -- %s. Using the ",
+      warn(sprintf(paste0("ngvb: the precision prior on '%s' was dropped -- %s. Using the ",
                           "default PC prior; set it explicitly with components = list(%s = ",
                           "ngvb_operator(..., pc.prec = c(U = , alpha = )))."),
                    comp.name, reason, comp.name))
@@ -175,10 +175,10 @@ ngvb_apply_user_prec_prior <- function(op, hyper, comp.name, verbose = TRUE) {
       ## all.hyper always records every hyperparameter (usually at its INLA
       ## default), so this is routine, not a user error: inform, don't warn.
       if (isTRUE(verbose))
-        message(sprintf(paste0("ngvb2: component '%s' uses the engine's default prior(s) for %s ",
+        message(sprintf(paste0("ngvb: component '%s' uses the engine's default prior(s) for %s ",
                                "(only the precision prior is carried over)."), comp.name, txt))
     } else {
-      warn(sprintf(paste0("ngvb2: prior(s) on %s for component '%s' were not carried over ",
+      warn(sprintf(paste0("ngvb: prior(s) on %s for component '%s' were not carried over ",
                           "(ngvb maps only the precision prior); the engine default is used."),
                    txt, comp.name))
     }

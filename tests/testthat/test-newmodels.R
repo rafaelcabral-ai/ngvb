@@ -43,9 +43,9 @@ test_that(".rgig_vec draws each index from its own GIG (guards the vector-chi bu
   skip_if_not_installed("GIGrvg")
   a <- rep(1, 3); b <- c(1, 100, 10000)
   set.seed(1)
-  draws <- replicate(400, ngvb2:::.rgig_vec(a, b))       # 3 x 400
+  draws <- replicate(400, ngvb:::.rgig_vec(a, b))       # 3 x 400
   emp   <- rowMeans(draws)
-  exact <- ngvb2:::GIGM1(-1, a, b)                        # per-index GIG mean
+  exact <- ngvb:::GIGM1(-1, a, b)                        # per-index GIG mean
   # correct per-index sampling tracks each index's mean; the vector-chi bug would
   # make all three rows share index 1's (~0.7) mean.
   expect_equal(unname(emp), unname(exact), tolerance = 0.15)

@@ -19,7 +19,7 @@ ngvb_predictor_length <- function(ct) sum(ct$length[grepl("Predictor", ct$tag)])
 ngvb_component_index <- function(fit, comp.name) {
   ct <- fit$misc$configs$contents
   k  <- which(ct$tag == comp.name)
-  if (length(k) != 1L) stop("ngvb2: component '", comp.name, "' not found in configs")
+  if (length(k) != 1L) stop("ngvb: component '", comp.name, "' not found in configs")
   start <- ct$start[k] - ngvb_predictor_length(ct)
   start:(start + ct$length[k] - 1L)
 }

@@ -1,17 +1,18 @@
-# ngvb2
+# ngvb
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/R-CMD-check.yaml)
-[![pkgdown](https://github.com/rafaelcabral-ai/ngvb2/actions/workflows/pkgdown.yaml/badge.svg)](https://rafaelcabral-ai.github.io/ngvb2/)
+[![R-CMD-check](https://github.com/rafaelcabral-ai/ngvb/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafaelcabral-ai/ngvb/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/rafaelcabral-ai/ngvb/actions/workflows/pkgdown.yaml/badge.svg)](https://rafaelcabral-ai.github.io/ngvb/)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![JASA 2024](https://img.shields.io/badge/JASA%202024-VB%20%2B%20Laplace-b31b1b.svg)](https://doi.org/10.1080/01621459.2023.2296704)
 [![JRSS-B 2025](https://img.shields.io/badge/JRSS--B%202025-Model%20checking-b31b1b.svg)](https://doi.org/10.1093/jrsssb/qkae107)
 <!-- badges: end -->
 
-**Latent non-Gaussian modelling with R-INLA and variational Bayes.** A rebuild of
-[`ngvb`](https://github.com/rafaelcabral96/ngvb).
+**ngvb** — non-Gaussian variational Bayes — is a ground-up rebuild of
+[`ngvb`](https://github.com/rafaelcabral96/ngvb) (formerly published here as `ngvb2`) on top of
+R-INLA.
 
-`ngvb2` takes an ordinary R-INLA latent *Gaussian* model, **checks** whether the Gaussian
+`ngvb` takes an ordinary R-INLA latent *Gaussian* model, **checks** whether the Gaussian
 assumption is adequate, and **extends** it to a latent *non-Gaussian* model, each in one line.
 
 ```r
@@ -32,7 +33,7 @@ summary(samples)                    # importance-weighted fixed effects + hyperp
 
 ## Installation
 
-`ngvb2` builds on [INLA](https://www.r-inla.org/), which is not on CRAN, so install it first:
+`ngvb` builds on [INLA](https://www.r-inla.org/), which is not on CRAN, so install it first:
 
 ```r
 install.packages("INLA",
@@ -40,7 +41,7 @@ install.packages("INLA",
   dep = TRUE)
 
 # install.packages("remotes")
-remotes::install_github("rafaelcabral-ai/ngvb2")
+remotes::install_github("rafaelcabral-ai/ngvb")
 ```
 
 ## The idea
@@ -56,7 +57,7 @@ Q(θ, V) = D(θ)ᵀ diag(1/V) D(θ)
 
 Where `Vᵢ = hᵢ` the model is Gaussian; where `Vᵢ` is inflated the increment is allowed to be
 unusually large. A single non-Gaussianity parameter `η ≥ 0` controls how far `V` may stray, and
-its exponential prior shrinks back to the Gaussian model unless the data pull away. `ngvb2` fits
+its exponential prior shrinks back to the Gaussian model unless the data pull away. `ngvb` fits
 this with a variational-Bayes loop that alternates an INLA fit (for fixed `V`) with closed-form
 updates of `V` and `η`. One unified engine implements `Q(θ, V)` for every model and, unlike
 INLA's `generic0`, correctly owns the `V`-dependent normalizing constant.
@@ -93,9 +94,9 @@ dropped with a warning, in which case set the prior explicitly via
 
 ## Documentation
 
-See the [Get started](https://rafaelcabral-ai.github.io/ngvb2/articles/ngvb2.html) article for
+See the [Get started](https://rafaelcabral-ai.github.io/ngvb/articles/ngvb.html) article for
 worked examples across time series, areal, geostatistical and custom models, and the
-[reference](https://rafaelcabral-ai.github.io/ngvb2/reference/index.html) for the full API.
+[reference](https://rafaelcabral-ai.github.io/ngvb/reference/index.html) for the full API.
 
 ## References
 

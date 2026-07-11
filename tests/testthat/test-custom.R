@@ -40,9 +40,9 @@ test_that("ngvb_custom SAR operator equals tau (I - rho W)^T (I - rho W)", {
 
 test_that("ngvb_find_f_model extracts the model expression from a formula", {
   f <- y ~ 1 + z + f(s, model = spde) + f(t, model = "ar1")
-  expect_equal(deparse(ngvb2:::ngvb_find_f_model(f, "s")), "spde")
-  expect_equal(deparse(ngvb2:::ngvb_find_f_model(f, "t")), "\"ar1\"")
-  expect_null(ngvb2:::ngvb_find_f_model(f, "nope"))
+  expect_equal(deparse(ngvb:::ngvb_find_f_model(f, "s")), "spde")
+  expect_equal(deparse(ngvb:::ngvb_find_f_model(f, "t")), "\"ar1\"")
+  expect_null(ngvb:::ngvb_find_f_model(f, "nope"))
 })
 
 test_that("SPDE operator uses lumped mass for h and factors the Matern precision", {

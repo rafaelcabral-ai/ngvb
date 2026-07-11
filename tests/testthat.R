@@ -1,4 +1,4 @@
 library(testthat)
-library(ngvb2)
+library(ngvb)
 
-test_check("ngvb2")
+test_check("ngvb")

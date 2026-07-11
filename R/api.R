@@ -245,11 +245,11 @@ ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SC
   .need_inla()
   method <- match.arg(method)
   if (is.null(fit$misc$configs))
-    stop("ngvb2: refit the LGM with control.compute = list(config = TRUE).")
+    stop("ngvb: refit the LGM with control.compute = list(config = TRUE).")
   if (is.null(selection))
     selection <- lapply(fit$summary.random, function(x) seq_len(nrow(x)))
   comp.names <- names(selection)
-  if (length(comp.names) == 0L) stop("ngvb2: no random components found in the fit.")
+  if (length(comp.names) == 0L) stop("ngvb: no random components found in the fit.")
   on.exit(suppressWarnings(rm(list = paste0("ngvb.model.", comp.names), envir = globalenv())),
           add = TRUE)
 

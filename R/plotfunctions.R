@@ -5,7 +5,7 @@
 ## server, no leaflet, so they render inside a vignette and pass R CMD check.
 ## ---------------------------------------------------------------------------
 
-#' A shared, recessive ggplot theme for the ngvb2 plots.
+#' A shared, recessive ggplot theme for the ngvb plots.
 #' @keywords internal
 ngvb_theme <- function(base = 12) {
   ggplot2::theme_minimal(base_size = base) +

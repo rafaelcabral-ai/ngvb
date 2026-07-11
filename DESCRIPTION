@@ -1,7 +1,7 @@
-Package: ngvb2
+Package: ngvb
 Type: Package
 Title: Latent Non-Gaussian Modelling with 'INLA' and Variational Bayes
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Rafael", "Cabral", email = "rafael.medeiros.cabral@gmail.com",
     role = c("aut", "cre", "cph"))
 Description: Diagnoses whether the latent Gaussian assumption of a model fitted
@@ -42,9 +42,9 @@ Suggests:
     rmarkdown,
     bslib
 Additional_repositories: https://inla.r-inla-download.org/R/stable
-URL: https://github.com/rafaelcabral-ai/ngvb2,
-    https://rafaelcabral-ai.github.io/ngvb2/
-BugReports: https://github.com/rafaelcabral-ai/ngvb2/issues
+URL: https://github.com/rafaelcabral-ai/ngvb,
+    https://rafaelcabral-ai.github.io/ngvb/
+BugReports: https://github.com/rafaelcabral-ai/ngvb/issues
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/Needs/website: rmarkdown

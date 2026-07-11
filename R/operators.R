@@ -25,7 +25,7 @@
 #' @param ... Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
 #'   `loc` for ou). For `"spde"`, pass `spde = INLA::inla.spde2.pcmatern(mesh,
 #'   prior.range = , prior.sigma = )` (or `mesh` + `prior.range` + `prior.sigma`
-#'   and ngvb2 builds it); the non-Gaussian SPDE uses that PC prior on the
+#'   and ngvb builds it); the non-Gaussian SPDE uses that PC prior on the
 #'   practical range and marginal SD. Plain `inla.spde2.matern()` fields are
 #'   rejected — only the PC-prior parameterization is supported.
 #' @return An operator descriptor: a list with `Dfunc(theta)`, the constant
@@ -48,7 +48,7 @@ ngvb_operator <- function(type, ...) {
     seasonal = op_seasonal(...),
     generic0 = op_generic0(...),
     from_Q = op_from_Q(...),
-    stop("ngvb2: operator type not implemented yet: ", type)
+    stop("ngvb: operator type not implemented yet: ", type)
   )
 }
 
@@ -81,7 +81,7 @@ op_generic0 <- function(C, pc.prec = c(U = 1, alpha = 0.01)) {
   e  <- eigen((C + t(C)) / 2, symmetric = TRUE)
   tol <- max(abs(e$values)) * 1e-9
   if (min(e$values) < -tol)
-    warning("ngvb2: generic0 Cmatrix has negative eigenvalues (min = ",
+    warning("ngvb: generic0 Cmatrix has negative eigenvalues (min = ",
             signif(min(e$values), 3), "); a structure matrix must be positive ",
             "semi-definite. The negative part is dropped, so D^T D != C.", call. = FALSE)
   pos <- e$values > tol
@@ -141,16 +141,16 @@ op_generic0 <- function(C, pc.prec = c(U = 1, alpha = 0.01)) {
 
 op_from_Q <- function(Q, pc.prec = c(U = 1, alpha = 0.01), tol = 1e-8) {
   Q <- methods::as(methods::as(methods::as(Q, "dMatrix"), "generalMatrix"), "CsparseMatrix")
-  if (nrow(Q) != ncol(Q)) stop("ngvb2: Q must be square.", call. = FALSE)
+  if (nrow(Q) != ncol(Q)) stop("ngvb: Q must be square.", call. = FALSE)
   Q <- (Q + Matrix::t(Q)) / 2
   n <- nrow(Q)
   scal <- max(abs(Q))
-  if (!is.finite(scal) || scal <= 0) stop("ngvb2: Q is zero or non-finite.", call. = FALSE)
+  if (!is.finite(scal) || scal <= 0) stop("ngvb: Q is zero or non-finite.", call. = FALSE)
 
   Qt  <- methods::as(Q, "TsparseMatrix")
   off <- Qt@i != Qt@j
   if (any(Qt@x[off] > tol * scal))
-    stop("ngvb2: op_from_Q requires non-positive off-diagonal entries (an ",
+    stop("ngvb: op_from_Q requires non-positive off-diagonal entries (an ",
          "M-matrix / conditional autoregression, e.g. iid, rw1, ICAR, proper CAR ",
          "structures). This Q has positive off-diagonals (largest = ",
          signif(max(Qt@x[off]), 3), "), as in rw2 / AR(p>1) / SPDE precisions, ",
@@ -164,14 +164,14 @@ op_from_Q <- function(Q, pc.prec = c(U = 1, alpha = 0.01), tol = 1e-8) {
   ## row-sum excess -> diagonal anchor rows
   r <- Matrix::rowSums(Q)
   if (any(r < -sqrt(tol) * scal))
-    stop("ngvb2: op_from_Q requires non-negative row sums (diagonal dominance); ",
+    stop("ngvb: op_from_Q requires non-negative row sums (diagonal dominance); ",
          "min row sum = ", signif(min(r), 3), ". This Q is not a valid ",
          "conditional-autoregression structure.", call. = FALSE)
   r <- pmax(r, 0)
   anchor <- which(r > tol * scal)
 
   ne <- length(ei); na <- length(anchor)
-  if (ne + na == 0L) stop("ngvb2: Q decomposed to an empty D (all entries ~ 0).", call. = FALSE)
+  if (ne + na == 0L) stop("ngvb: Q decomposed to an empty D (all entries ~ 0).", call. = FALSE)
   D0 <- Matrix::sparseMatrix(
     i = c(seq_len(ne), seq_len(ne), ne + seq_len(na)),
     j = c(ei, ej, anchor),
@@ -181,7 +181,7 @@ op_from_Q <- function(Q, pc.prec = c(U = 1, alpha = 0.01), tol = 1e-8) {
   ## exactness check: D0^T D0 must reproduce Q to numerical precision
   rel <- max(abs(Matrix::crossprod(D0) - Q)) / scal
   if (rel > 1e-10)
-    stop("ngvb2: internal error -- incidence reconstruction differs from Q (rel. ",
+    stop("ngvb: internal error -- incidence reconstruction differs from Q (rel. ",
          signif(rel, 3), ").", call. = FALSE)
 
   ## rank deficiency: one per connected component with no diagonal anchor
@@ -245,18 +245,18 @@ op_spde <- function(spde = NULL, mesh = NULL, prior.range = NULL, prior.sigma = 
                     alpha = 2) {
   if (is.null(spde)) {
     if (is.null(mesh) || is.null(prior.range) || is.null(prior.sigma))
-      stop("ngvb2: supply a PC-prior SPDE via spde = INLA::inla.spde2.pcmatern(...), or ",
-           "give mesh + prior.range + prior.sigma so ngvb2 can build one.", call. = FALSE)
+      stop("ngvb: supply a PC-prior SPDE via spde = INLA::inla.spde2.pcmatern(...), or ",
+           "give mesh + prior.range + prior.sigma so ngvb can build one.", call. = FALSE)
     .need_inla()
     spde <- INLA::inla.spde2.pcmatern(mesh, alpha = alpha,
                                       prior.range = prior.range, prior.sigma = prior.sigma)
   }
   if (!inherits(spde, "inla.spde2"))
-    stop("ngvb2: `spde` must be an inla.spde2 object from INLA::inla.spde2.pcmatern().",
+    stop("ngvb: `spde` must be an inla.spde2 object from INLA::inla.spde2.pcmatern().",
          call. = FALSE)
   hy <- spde$f$hyper
   if (is.null(hy$theta1$prior) || !identical(hy$theta1$prior, "pcmatern"))
-    stop("ngvb2: the SPDE operator requires a PC-prior field built with ",
+    stop("ngvb: the SPDE operator requires a PC-prior field built with ",
          "INLA::inla.spde2.pcmatern(). The supplied object uses a '",
          if (is.null(hy$theta1$prior)) "?" else hy$theta1$prior,
          "' prior; rebuild it with inla.spde2.pcmatern(mesh, prior.range = , prior.sigma = ).",
@@ -273,7 +273,7 @@ op_spde <- function(spde = NULL, mesh = NULL, prior.range = NULL, prior.sigma = 
   l_r <- pr[1L]; l_s <- pr[2L]; d <- pr[3L]
   nu  <- alpha - d / 2
   if (nu <= 0)
-    stop("ngvb2: alpha - d/2 must be positive (got alpha = ", alpha, ", d = ", d, ").",
+    stop("ngvb: alpha - d/2 must be positive (got alpha = ", alpha, ", d = ", d, ").",
          call. = FALSE)
   ## constant in log tau (see header): 0.5[logGamma(nu) - logGamma(nu+d/2) - (d/2)log 4pi]
   ctau <- 0.5 * (lgamma(nu) - lgamma(nu + d / 2) - (d / 2) * log(4 * pi))
@@ -311,7 +311,7 @@ op_spde <- function(spde = NULL, mesh = NULL, prior.range = NULL, prior.sigma = 
       Qm <- Matrix::t(D) %*% Matrix::Diagonal(x = 1 / op$h) %*% D
       rel <- max(abs(as.matrix(Qi - Qm))) / max(abs(as.matrix(Qi)))
       if (is.finite(rel) && rel > 1e-6)
-        stop("ngvb2: SPDE precision reconstruction disagrees with INLA (rel. diff ",
+        stop("ngvb: SPDE precision reconstruction disagrees with INLA (rel. diff ",
              signif(rel, 3), "). Only the standard alpha = 2 Matern on a flat mesh is ",
              "supported for the non-Gaussian SPDE extension.", call. = FALSE)
     }
