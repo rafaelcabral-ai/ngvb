@@ -17,14 +17,12 @@ home:
 
 navbar:
   structure:
-    left:  [intro, reference, articles, news]
+    left:  [intro, reference, news]
     right: [search, github]
   components:
-    articles:
-      text: Articles
-      menu:
-        - text: Get started
-          href: articles/ngvb2.html
+    reference:
+      text: Functions
+      href: reference/index.html
 
 reference:
   - title: Diagnose and fit
