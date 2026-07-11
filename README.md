@@ -17,9 +17,9 @@ LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = T
 ng.check(LGM)       # is the latent Gaussian assumption adequate, and where not?
 LnGM <- ngvb(LGM)   # fit the non-Gaussian extension
 
-samples <- ngvb_sample(LnGM, n.samples = 30) # sample the non-gaussian mixing variables V from their variational posterior and fit several R-INLA models
+samples <- ngvb_sample(LnGM, n.samples = 30) # sample non-gaussian V from variational posterior + fit R-INLA models
 bayes.factor(samples)               # how much better the LnGM is, with V integrated out?
-summary(samples)                    # importance-weighted summairies of fixed effects + hyperparameters of the LnGM
+summary(samples)                    # summary of fixed effects + hyperparameters of the LnGM
 ```
 
 ## Installation
@@ -50,8 +50,7 @@ Where `Vᵢ = hᵢ` the model is Gaussian; where `Vᵢ` is inflated the incremen
 unusually large. A single non-Gaussianity parameter `η ≥ 0` controls how far `V` may stray, and
 its exponential prior shrinks back to the Gaussian model unless the data pull away. `ngvb` fits
 this with a variational-Bayes loop that alternates an INLA fit (for fixed `V`) with closed-form
-updates of `V` and `η`. One unified engine implements `Q(θ, V)` for every model and, unlike
-INLA's `generic0`, correctly owns the `V`-dependent normalizing constant.
+updates of `V` and `η`.
 
 ## Models
 
@@ -72,16 +71,7 @@ rebuild the operator. No arguments are needed for the auto-detected models:
 | Your own precision, or borrowed from [ngme2](https://davidbolin.github.io/ngme2/) | — | `ngvb_custom(D, h, ...)` |
 
 Additive models just work: each `f()` term gets its own mixing variables and non-Gaussianity
-parameter, all fit jointly. `from_Q` covers the whole conditional-autoregression class (i.i.d.,
-random walk, ICAR, proper CAR) with one canonical dependency-matrix factorization, so it's the
-right fallback for a CAR-type component that isn't in the table above; models with positive
-off-diagonal precision entries (RW2, AR(*p* > 1), SPDE) need their dedicated operator instead.
-
-A `pc.prec`, `loggamma`, or `normal` **precision prior** you set on a component (`f(s, …, hyper = list(prec = …))`)
-is carried into the non-Gaussian fit — including INLA's own default prior if you didn't set one —
-so the LnGM is the exact non-Gaussian extension of the LGM you fitted; other prior families are
-dropped with a warning, in which case set the prior explicitly via
-`components = list(s = ngvb_operator(…, pc.prec = c(U = , alpha = )))`.
+parameter, all fit jointly. 
 
 ## Documentation
 
