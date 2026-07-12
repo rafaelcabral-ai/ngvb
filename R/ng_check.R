@@ -38,6 +38,18 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #' @param components Optional operator overrides (e.g. SPDE), as in [ngvb()].
 #' @param compute.fixed If `TRUE`, also return the sensitivity of each fixed effect
 #'   to each component's non-Gaussianity parameter.
+#' @param compute.random If `TRUE`, also return, for each checked component, the
+#'   sensitivity of *its own* posterior mean at every node to its own
+#'   non-Gaussianity -- i.e. how much each node's fitted value would move under
+#'   [ngvb()], estimated from the base (Gaussian) fit alone, without actually
+#'   fitting the non-Gaussian model. This is the same Bayes-factor-sensitivity
+#'   theory used for `sens.fixed` (Theorem 2 of Cabral, Bolin & Rue, JRSS-B
+#'   2025), applied to the component's own field instead of a fixed effect: it
+#'   reuses the cross-covariance already computed for `d`, so it costs one
+#'   extra matrix multiply per hyperparameter configuration, not a refit.
+#'   Useful as a preview -- e.g. mapped over an SPDE mesh -- of where a
+#'   subsequent `ngvb()` fit is expected to change the predictions the most,
+#'   before actually running it.
 #' @param plot If `TRUE` (default), draw the diagnostic plots (see [plot.ngvb.check()]):
 #'   per-index Bayes-factor sensitivity, and the observed overall sensitivity against
 #'   its Gaussian reference distribution.
@@ -45,7 +57,9 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #'   hyperparameter posterior mode \eqn{\hat\gamma}: the BF sensitivity `s0`, the
 #'   per-index contributions `d`, and (Gaussian response) the reference SD `sd.ref`
 #'   and `p.value`; the hyperparameter-mixture averages are also kept as
-#'   `s0.mixture` / `d.mixture`. Plus `sens.fixed` if requested.
+#'   `s0.mixture` / `d.mixture`. Plus `sens.fixed` if `compute.fixed = TRUE`, and
+#'   `sens.random` (a named list, one vector per checked component, aligned with
+#'   `selection`) if `compute.random = TRUE`.
 #' @seealso [ngvb()]
 #' @examples
 #' \donttest{
@@ -61,7 +75,7 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #' }
 #' @export
 ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = TRUE,
-                     plot = TRUE) {
+                     compute.random = FALSE, plot = TRUE) {
   .need_inla()
   if (is.null(fit$misc$configs))
     stop("ngvb: refit the LGM with control.compute = list(config = TRUE).")
@@ -91,6 +105,8 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
   sens.fixed <- if (compute.fixed)
     matrix(NA_real_, length(comp.names), length(fixed.names),
            dimnames = list(comp.names, fixed.names)) else NULL
+  sens.random <- if (compute.random)
+    stats::setNames(vector("list", length(comp.names)), comp.names) else NULL
 
   for (cn in comp.names) {
     op <- ops[[cn]]; h <- op$h; Dfunc <- op$Dfunc
@@ -101,6 +117,7 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
     s0.k    <- numeric(nconfig)
     varref.k <- numeric(nconfig)
     sfix.k  <- if (compute.fixed) matrix(0, length(fixed.names), nconfig) else NULL
+    srand.k <- if (compute.random) matrix(0, length(sel), nconfig) else NULL
 
     for (k in seq_len(nconfig)) {
       cf    <- cfgs[[k]]
@@ -108,8 +125,13 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
       mu    <- cf$improved.mean[sel]
       Sigma <- as.matrix(cf$Qinv[sel, sel, drop = FALSE])
       Sigma <- Sigma + t(Sigma) - diag(diag(Sigma))
+      ## Cov((Dx)_i, x_j) = D %*% Cov(x, x_j); shared by Gamma below and, when
+      ## requested, by sens.random (Cov((Dx)_i, x_j) for x_j in this SAME
+      ## component -- the fixed-effect cross-covariance below is the same
+      ## construction against a different set of columns).
+      DS    <- D %*% Sigma
       b     <- as.numeric(D %*% mu)
-      DSDt  <- as.matrix(D %*% Sigma %*% Matrix::t(D))
+      DSDt  <- as.matrix(DS %*% Matrix::t(D))
       Gamma <- -DSDt + diag(h)
       gii   <- diag(Gamma)
       di.mat[k, ] <- (b^4 + 3 * gii^2 - 6 * b^2 * gii) / (8 * h^3)
@@ -124,6 +146,14 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
         muz   <- cf$improved.mean[fixed.pos]
         for (j in seq_along(fixed.pos))
           sfix.k[j, k] <- sum(ng_sens_fixed(b, gii, Sxz[, j], muz[j], h))
+      }
+      if (compute.random) {
+        ## Sensitivity of this component's OWN posterior mean at node j to its
+        ## OWN non-Gaussianity: same Theorem-2 construction as sens.fixed,
+        ## with the field's own nodes standing in for the "fixed effect".
+        DSm <- as.matrix(DS)
+        for (j in seq_along(sel))
+          srand.k[j, k] <- sum(ng_sens_fixed(b, gii, DSm[, j], mu[j], h))
       }
     }
     ## The diagnostic s0(y, gamma-hat) and its reference variance (Prop. 1) are
@@ -143,9 +173,10 @@ ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = T
     }
     per.comp[[cn]] <- res
     if (compute.fixed) sens.fixed[cn, ] <- as.numeric(sfix.k %*% w)
+    if (compute.random) sens.random[[cn]] <- as.numeric(srand.k %*% w)
   }
 
-  out <- list(components = per.comp, sens.fixed = sens.fixed,
+  out <- list(components = per.comp, sens.fixed = sens.fixed, sens.random = sens.random,
               gaussian = gaussian, selection = selection)
   class(out) <- "ngvb.check"
   if (isTRUE(plot)) print(plot(out))

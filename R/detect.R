@@ -15,10 +15,6 @@
   "Besags ICAR model"   = "car_icar",
   "SPDE2 model"         = "spde",
   "Seasonal model"      = "seasonal"
-  ## Note: "Generic0 model" is intentionally NOT auto-detected. generic0 is
-  ## available as a deliberate manual operator, ngvb_operator("generic0", C = ),
-  ## passed via components = -- see its caveats (the Cmatrix must be positive
-  ## semi-definite, and an intrinsic C needs its own null-space constraints).
 )
 
 #' Find the `model =` expression of the f(<comp>, ...) term in a formula.
@@ -104,9 +100,8 @@ ngvb_detect_operator <- function(fit, comp.name, user.op = NULL) {
   if (is.na(typ))
     stop("ngvb: cannot auto-detect operator for '", comp.name,
          "' (model.random = '", mr, "'). Supply it via components = list(",
-         comp.name, " = ngvb_operator(...)). For any CAR-type component ",
-         "(non-positive off-diagonal precision) you can pass its structure ",
-         "matrix directly: ngvb_operator(\"from_Q\", Q = <structure>).")
+         comp.name, " = ngvb_operator(...)) or a custom operator ",
+         "ngvb_custom(D, h, ...).")
   n <- nrow(fit$summary.random[[comp.name]])
   switch(typ,
     iid = ngvb_operator("iid", n = n),

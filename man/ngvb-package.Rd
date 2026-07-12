@@ -12,8 +12,8 @@ engine implements the conditional precision
 \eqn{Q(\theta, V) = D(\theta)^T \mathrm{diag}(1/V) D(\theta)} and owns the
 V-dependent normalizing constant, driven by a model registry
 ([ngvb_operator()]) covering iid, rw1, rw2, ar1, Ornstein-Uhlenbeck,
-intrinsic-CAR (besag), SAR, SPDE/Matern, seasonal and generic structure-matrix
-models; anything else is added with [ngvb_custom()]. [ngvb_sample()] and
+intrinsic-CAR (besag), SAR, SPDE/Matern and seasonal models; anything else is
+added with [ngvb_custom()]. [ngvb_sample()] and
 [bayes.factor()] integrate the mixing variables out for a marginal-likelihood
 comparison against the Gaussian model.
 }

@@ -173,6 +173,24 @@ print.ngvb.samples <- function(x, ...) {
              row.names = rn)
 }
 
+## Pool summary.random$<comp.name> across the sampled fits (same importance-
+## weighted mean/sd as .pool_ngvb_summary(), but summary.random is a *list* of
+## per-component tables keyed by node ID rather than one shared table).
+#' @keywords internal
+.pool_ngvb_random <- function(object, w, comp.name) {
+  tabs <- lapply(object$fits, function(f) f$summary.random[[comp.name]])
+  ok <- !vapply(tabs, is.null, logical(1)) & vapply(tabs, function(t) nrow(t) > 0, logical(1))
+  if (!any(ok)) return(NULL)
+  rn       <- tabs[[which(ok)[1]]]$ID
+  mean.mat <- vapply(tabs[ok], function(t) t$mean, numeric(length(rn)))
+  sd.mat   <- vapply(tabs[ok], function(t) t$sd,   numeric(length(rn)))
+  ww <- w[ok] / sum(w[ok])
+  pooled.mean <- as.numeric(mean.mat %*% ww)
+  ## law of total variance across the mixture of fits
+  pooled.var  <- as.numeric((sd.mat^2 + mean.mat^2) %*% ww) - pooled.mean^2
+  data.frame(ID = rn, mean = round(pooled.mean, 4), sd = round(sqrt(pmax(0, pooled.var)), 4))
+}
+
 #' Importance-weighted posterior summary of the sampled fits.
 #'
 #' Pools a chosen INLA summary across the sampled fits with the importance
@@ -180,44 +198,82 @@ print.ngvb.samples <- function(x, ...) {
 #' non-Gaussian model (with `V` integrated out), plus the Bayes factor.
 #'
 #' @param object An `ngvb.samples` object.
-#' @param what One of `"all"` (default), `"fixed"`, or `"hyperpar"` -- which
-#'   INLA summary table(s) to pool. `"all"` shows and returns both, silently
-#'   skipping either one that doesn't apply to this model (e.g. `"fixed"` on
-#'   a fixed-effect-free model). Run `args(summary.ngvb.samples)` or
-#'   `?summary.ngvb.samples` to see this list again.
+#' @param what One of `"all"` (default), `"fixed"`, `"hyperpar"`, or `"random"`
+#'   -- which INLA summary table(s) to pool. `"random"` pools `summary.random`
+#'   for every component (the latent field itself: one table per component,
+#'   keyed by node `ID`, e.g. mesh node or time index). `"all"` shows and
+#'   returns all three, silently skipping any that don't apply to this model
+#'   (e.g. `"fixed"` on a fixed-effect-free model); random-effect tables are
+#'   printed as a head (all rows are still returned). Run
+#'   `args(summary.ngvb.samples)` or `?summary.ngvb.samples` to see this list
+#'   again.
+#' @param verbose If `TRUE` (default), print the report as a side effect (as
+#'   `ng.check()` does for its plot). Set `FALSE` to only get the return
+#'   value back, e.g. when pooling `what = "random"` into a plot without the
+#'   table being echoed.
 #' @param ... Ignored.
-#' @return Called for the summary it prints. Invisibly: a single data frame
-#'   of importance-weighted posterior means/sds for `what = "fixed"` or
-#'   `"hyperpar"`; for `"all"`, a list `list(fixed = , hyperpar = )` with
-#'   either element `NULL` if that table doesn't apply.
+#' @return Invisibly: a single data frame of importance-weighted posterior
+#'   means/sds for `what = "fixed"` or `"hyperpar"`; a named list of one such
+#'   data frame per component (keyed by node `ID`) for `what = "random"`; for
+#'   `"all"`, a list `list(fixed = , hyperpar = , random = )` with any
+#'   inapplicable element `NULL`. Printed as a side effect when `verbose = TRUE`.
 #' @method summary ngvb.samples
 #' @export
-summary.ngvb.samples <- function(object, what = c("all", "fixed", "hyperpar"), ...) {
+summary.ngvb.samples <- function(object, what = c("all", "fixed", "hyperpar", "random"),
+                                 verbose = TRUE, ...) {
   what <- match.arg(what)
   bf <- bayes.factor(object)
-  cat("Latent non-Gaussian model, V integrated out over", object$n.samples, "draws\n")
-  cat(sprintf("Bayes factor vs Gaussian model: %.3g (log10 = %.2f), weight ESS %.1f\n\n",
-              bf$BF, bf$log10BF, bf$ess))
+  if (verbose) {
+    cat("Latent non-Gaussian model, V integrated out over", object$n.samples, "draws\n")
+    cat(sprintf("Bayes factor vs Gaussian model: %.3g (log10 = %.2f), weight ESS %.1f\n\n",
+                bf$BF, bf$log10BF, bf$ess))
+  }
   ## normalized importance weights (marginal-likelihood weighted)
   lw <- object$logm + object$logw; w <- exp(lw - max(lw)); w <- w / sum(w)
 
   show_one <- function(label, key) {
     res <- .pool_ngvb_summary(object, w, key)
-    cat(label, ":\n", sep = "")
-    if (is.null(res)) cat("  (none)\n") else print(res)
-    cat("\n")
+    if (verbose) {
+      cat(label, ":\n", sep = "")
+      if (is.null(res)) cat("  (none)\n") else print(res)
+      cat("\n")
+    }
+    res
+  }
+
+  show_random <- function(full) {
+    res <- stats::setNames(
+      lapply(object$comp.names, function(cn) .pool_ngvb_random(object, w, cn)),
+      object$comp.names)
+    if (verbose) {
+      cat("Random effects:\n")
+      for (cn in object$comp.names) {
+        tab <- res[[cn]]
+        if (is.null(tab)) { cat("  $", cn, ": (none)\n", sep = ""); next }
+        cat("  $", cn, " (", nrow(tab), " nodes)\n", sep = "")
+        print(if (full) tab else utils::head(tab, 6))
+        if (!full && nrow(tab) > 6)
+          cat("  ... ", nrow(tab) - 6,
+              " more row(s); use what = \"random\" to print in full\n", sep = "")
+      }
+      cat("\n")
+    }
     res
   }
 
   if (what == "all") {
-    res <- list(fixed = show_one("Fixed effects", "summary.fixed"),
-               hyperpar = show_one("Hyperparameters", "summary.hyperpar"))
+    res <- list(fixed    = show_one("Fixed effects", "summary.fixed"),
+               hyperpar = show_one("Hyperparameters", "summary.hyperpar"),
+               random   = show_random(full = FALSE))
     return(invisible(res))
   }
 
+  if (what == "random") return(invisible(show_random(full = TRUE)))
+
   key <- if (what == "fixed") "summary.fixed" else "summary.hyperpar"
   res <- .pool_ngvb_summary(object, w, key)
-  if (is.null(res)) { cat("(no", what, "effects)\n"); return(invisible(res)) }
-  print(res)
+  if (verbose) {
+    if (is.null(res)) cat("(no", what, "effects)\n") else print(res)
+  }
   invisible(res)
 }

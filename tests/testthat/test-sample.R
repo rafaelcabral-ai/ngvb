@@ -48,5 +48,26 @@ test_that("summary.ngvb.samples: 'all' shows real fixed-effect estimates when pr
 
 test_that("summary.ngvb.samples: the 'what' choices are discoverable via args()", {
   formals.what <- eval(formals(summary.ngvb.samples)$what)
-  expect_equal(formals.what, c("all", "fixed", "hyperpar"))
+  expect_equal(formals.what, c("all", "fixed", "hyperpar", "random"))
+})
+
+test_that("summary.ngvb.samples: 'random' pools the latent field, matches 'all'", {
+  skip_if_not_installed("INLA")
+  skip_on_cran()
+  set.seed(1); n <- 25
+  d <- data.frame(y = rnorm(n), i = 1:n)
+
+  LGM  <- INLA::inla(y ~ -1 + f(i, model = "iid"), data = d,
+                     control.compute = list(config = TRUE))
+  LnGM <- suppressWarnings(suppressMessages(ngvb(LGM, iter = 3, verbose = FALSE)))
+  samples <- suppressWarnings(suppressMessages(ngvb_sample(LnGM, n.samples = 8, verbose = FALSE)))
+
+  res.all <- summary(samples)
+  expect_true(is.list(res.all$random))
+  expect_true(is.data.frame(res.all$random$i))
+  expect_equal(nrow(res.all$random$i), n)
+  expect_true(all(c("ID", "mean", "sd") %in% names(res.all$random$i)))
+
+  res.random <- summary(samples, what = "random")
+  expect_equal(res.random, res.all$random)
 })

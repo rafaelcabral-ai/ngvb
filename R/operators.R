@@ -17,11 +17,7 @@
 #' Construct an ngvb operator descriptor.
 #'
 #' @param type Model type: one of `"iid"`, `"rw1"`, `"rw2"`, `"ar1"`, `"sar"`,
-#'   `"car"`, `"spde"`, `"ou"`, `"seasonal"`, `"generic0"`, `"from_Q"`.
-#'   `"from_Q"` takes any M-matrix structure `Q` (non-positive off-diagonals,
-#'   e.g. any CAR-type precision) and factors it canonically as `Q = D^T D`
-#'   with one increment per graph edge -- heavy tails then land on the
-#'   conditional differences of the field.
+#'   `"car"`, `"spde"`, `"ou"`, `"seasonal"`.
 #' @param ... Model-specific arguments (e.g. `n` for rw/ar/iid, `W` for sar/car,
 #'   `loc` for ou). For `"spde"`, pass `spde = INLA::inla.spde2.pcmatern(mesh,
 #'   prior.range = , prior.sigma = )` (or `mesh` + `prior.range` + `prior.sigma`
@@ -46,8 +42,6 @@ ngvb_operator <- function(type, ...) {
     spde = op_spde(...),
     ou  = op_ou(...),
     seasonal = op_seasonal(...),
-    generic0 = op_generic0(...),
-    from_Q = op_from_Q(...),
     stop("ngvb: operator type not implemented yet: ", type)
   )
 }
@@ -66,131 +60,6 @@ op_seasonal <- function(n, season, pc.prec = c(U = 1, alpha = 0.01)) {
   lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
   list(type = "seasonal", n = n, ntheta = 1L, rankdef = season - 1L,
        h = rep(1, m), theta.initial = 4,
-       Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
-       graph    = Matrix::crossprod(D0),
-       logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
-}
-
-## ---- generic0: user-supplied structure matrix C, precision Q = tau C --------
-## Factor C = U diag(lambda) U^T and set D0 = diag(sqrt(lambda_+)) U_+^T over the
-## positive eigenvalues, so D0^T D0 = C exactly and rank(D0) = rank(C). A single
-## precision scales D = sqrt(tau) D0. Handles proper and intrinsic C alike.
-
-op_generic0 <- function(C, pc.prec = c(U = 1, alpha = 0.01)) {
-  C  <- as.matrix(C); n <- nrow(C)
-  e  <- eigen((C + t(C)) / 2, symmetric = TRUE)
-  tol <- max(abs(e$values)) * 1e-9
-  if (min(e$values) < -tol)
-    warning("ngvb: generic0 Cmatrix has negative eigenvalues (min = ",
-            signif(min(e$values), 3), "); a structure matrix must be positive ",
-            "semi-definite. The negative part is dropped, so D^T D != C.", call. = FALSE)
-  pos <- e$values > tol
-  D0 <- methods::as(Matrix::Matrix(diag(sqrt(e$values[pos]), sum(pos)) %*%
-                                   t(e$vectors[, pos, drop = FALSE])), "CsparseMatrix")
-  ## Graph = sparsity of Q(theta, V) = D0^T diag(1/V) D0 over ALL V. D0 is the
-  ## (generally dense) eigenvector factor, so this is NOT the sparsity of C:
-  ## for V != h the cancellations that make C sparse no longer hold and Q fills
-  ## in. Declare the structural union pattern of D0^T D0 (crossprod of D0's
-  ## incidence), which the rgeneric engine needs to be a superset of every Q(V).
-  inc   <- methods::as(abs(D0) > 0, "dsparseMatrix")
-  graph <- methods::as(Matrix::crossprod(inc) > 0, "CsparseMatrix")
-  lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
-  list(type = "generic0", n = n, ntheta = 1L, rankdef = n - sum(pos),
-       h = rep(1, sum(pos)), theta.initial = 4,
-       Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
-       graph    = graph,
-       logprior = function(theta) lp(theta[1L]), prec.logprior = lp)
-}
-
-## ---- from_Q: canonical signed-incidence factorization of an M-matrix -------
-## For a symmetric PSD structure matrix Q with NON-POSITIVE off-diagonals (a
-## conditional-autoregression / M-matrix), there is a canonical decomposition
-##    Q = sum_{i<j} w_ij (e_i - e_j)(e_i - e_j)^T + diag(r),
-##    w_ij = -q_ij >= 0,   r_i = sum_j q_ij  (row-sum excess, >= 0),
-## so D0 has one row sqrt(w_ij) (e_i - e_j)^T per graph edge plus one row
-## sqrt(r_i) e_i^T per positive excess, and D0^T D0 = Q EXACTLY. This is the
-## model-native innovation operator for the whole iid / rw1 / ICAR / proper-CAR
-## class, and unlike op_generic0's eigenfactor it is sparse and its increments
-## are interpretable: the non-Gaussian extension puts heavy tails on the
-## CONDITIONAL DIFFERENCES x_i - x_j across edges (plus the anchored levels).
-## For a Q that arose from some other construction (AR1 innovations, SPDE FEM
-## noise) this is *a* valid non-Gaussian extension but not the model-native one
-## -- prefer the dedicated operator when one exists.
-##
-## Outside the M-matrix class (positive off-diagonals: rw2, AR(p>1), SPDE
-## precisions) no canonical decomposition exists and we refuse loudly rather
-## than guess. One precision hyperparameter: D(theta) = sqrt(exp(theta)) * D0.
-
-## connected-component labels of an undirected graph via union-find
-#' @keywords internal
-.cc_labels <- function(n, ei, ej) {
-  parent <- seq_len(n)
-  find <- function(x) {
-    while (parent[x] != x) {
-      parent[x] <<- parent[parent[x]]
-      x <- parent[x]
-    }
-    x
-  }
-  for (k in seq_along(ei)) {
-    a <- find(ei[k]); b <- find(ej[k])
-    if (a != b) parent[a] <- b
-  }
-  vapply(seq_len(n), find, 1L)
-}
-
-op_from_Q <- function(Q, pc.prec = c(U = 1, alpha = 0.01), tol = 1e-8) {
-  Q <- methods::as(methods::as(methods::as(Q, "dMatrix"), "generalMatrix"), "CsparseMatrix")
-  if (nrow(Q) != ncol(Q)) stop("ngvb: Q must be square.", call. = FALSE)
-  Q <- (Q + Matrix::t(Q)) / 2
-  n <- nrow(Q)
-  scal <- max(abs(Q))
-  if (!is.finite(scal) || scal <= 0) stop("ngvb: Q is zero or non-finite.", call. = FALSE)
-
-  Qt  <- methods::as(Q, "TsparseMatrix")
-  off <- Qt@i != Qt@j
-  if (any(Qt@x[off] > tol * scal))
-    stop("ngvb: op_from_Q requires non-positive off-diagonal entries (an ",
-         "M-matrix / conditional autoregression, e.g. iid, rw1, ICAR, proper CAR ",
-         "structures). This Q has positive off-diagonals (largest = ",
-         signif(max(Qt@x[off]), 3), "), as in rw2 / AR(p>1) / SPDE precisions, ",
-         "where no canonical Q = D^T D decomposition exists -- use the dedicated ",
-         "operator for the model instead.", call. = FALSE)
-
-  ## edges from the strict upper triangle
-  up <- off & (Qt@i < Qt@j) & (Qt@x < -tol * scal)
-  ei <- Qt@i[up] + 1L; ej <- Qt@j[up] + 1L; w <- -Qt@x[up]
-
-  ## row-sum excess -> diagonal anchor rows
-  r <- Matrix::rowSums(Q)
-  if (any(r < -sqrt(tol) * scal))
-    stop("ngvb: op_from_Q requires non-negative row sums (diagonal dominance); ",
-         "min row sum = ", signif(min(r), 3), ". This Q is not a valid ",
-         "conditional-autoregression structure.", call. = FALSE)
-  r <- pmax(r, 0)
-  anchor <- which(r > tol * scal)
-
-  ne <- length(ei); na <- length(anchor)
-  if (ne + na == 0L) stop("ngvb: Q decomposed to an empty D (all entries ~ 0).", call. = FALSE)
-  D0 <- Matrix::sparseMatrix(
-    i = c(seq_len(ne), seq_len(ne), ne + seq_len(na)),
-    j = c(ei, ej, anchor),
-    x = c(sqrt(w), -sqrt(w), sqrt(r[anchor])),
-    dims = c(ne + na, n))
-
-  ## exactness check: D0^T D0 must reproduce Q to numerical precision
-  rel <- max(abs(Matrix::crossprod(D0) - Q)) / scal
-  if (rel > 1e-10)
-    stop("ngvb: internal error -- incidence reconstruction differs from Q (rel. ",
-         signif(rel, 3), ").", call. = FALSE)
-
-  ## rank deficiency: one per connected component with no diagonal anchor
-  comp    <- .cc_labels(n, ei, ej)
-  rankdef <- length(setdiff(unique(comp), unique(comp[anchor])))
-
-  lp <- .pc_prec_logprior(pc.prec[["U"]], pc.prec[["alpha"]])
-  list(type = "from_Q", n = n, ntheta = 1L, rankdef = as.integer(rankdef),
-       h = rep(1, ne + na), theta.initial = 4,
        Dfunc    = function(theta) sqrt(exp(theta[1L])) * D0,
        graph    = Matrix::crossprod(D0),
        logprior = function(theta) lp(theta[1L]), prec.logprior = lp)

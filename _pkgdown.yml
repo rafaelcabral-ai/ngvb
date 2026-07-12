@@ -17,7 +17,7 @@ home:
 
 navbar:
   structure:
-    left:  [intro, reference, news]
+    left:  [intro, reference]
     right: [search, github]
   components:
     reference:
@@ -65,8 +65,3 @@ reference:
     contents:
       - jumpts
       - Orthodont
-
-news:
-  releases:
-  - text: "Changelog"
-    href: news/index.html
