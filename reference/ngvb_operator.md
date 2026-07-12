@@ -13,12 +13,7 @@ ngvb_operator(type, ...)
 - type:
 
   Model type: one of \`"iid"\`, \`"rw1"\`, \`"rw2"\`, \`"ar1"\`,
-  \`"sar"\`, \`"car"\`, \`"spde"\`, \`"ou"\`, \`"seasonal"\`,
-  \`"generic0"\`, \`"from_Q"\`. \`"from_Q"\` takes any M-matrix
-  structure \`Q\` (non-positive off-diagonals, e.g. any CAR-type
-  precision) and factors it canonically as \`Q = D^T D\` with one
-  increment per graph edge – heavy tails then land on the conditional
-  differences of the field.
+  \`"sar"\`, \`"car"\`, \`"spde"\`, \`"ou"\`, \`"seasonal"\`.
 
 - ...:
 

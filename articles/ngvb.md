@@ -11,12 +11,12 @@ library(INLA)     # ngvb uses INLA as a backend; attach it to call inla() direct
 A latent Gaussian model (LGM), the workhorse of R-INLA, places a
 Gaussian prior on a latent field: a random walk, an autoregression, a
 spatial effect, or a set of random effects. That prior is convenient but
-rigid, because it assumes Gaussianity everywhere everywhere. Real data
-often break this assumption in just a few places, such as a sudden jump
-in a time series, one outlying subject, a sharp boundary between
-regions, or a local hotspot in space. A Gaussian model then has to
-compromise. It either over-smooths the interesting feature or inflates
-the variance everywhere to accommodate it.
+rigid, because it assumes Gaussianity everywhere. Real data often break
+this assumption in just a few places, such as a sudden jump in a time
+series, one outlying subject, a sharp boundary between regions, or a
+local hotspot in space. A Gaussian model then has to compromise. It
+either over-smooths the interesting feature or inflates the variance
+everywhere to accommodate it.
 
 `ngvb` relaxes that single assumption. It keeps everything you already
 have, the same INLA model and the same code, and replaces the Gaussian
@@ -28,21 +28,6 @@ everywhere else. Two functions do the work, and both take an ordinary
 - `ng.check(fit)` asks whether you should relax the Gaussian assumption,
   and where.
 - `ngvb(fit)` fits the non-Gaussian extension.
-
-Both auto-detect the models in your fit. Out of the box that covers
-`iid` random effects, random walks `rw1` and `rw2`, autoregressions
-`ar1`, intrinsic areal models `besag`, and Matern (`SPDE`) fields.
-Anything else is supplied through
-[`ngvb_operator()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_operator.md)
-/
-[`ngvb_custom()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_custom.md),
-described in the last section.
-
-Every example below follows the same short recipe: plot the data, write
-down the model, fit the Gaussian version with INLA, check it with
-[`ng.check()`](https://rafaelcabral-ai.github.io/ngvb/reference/ng.check.md),
-and then extend it with
-[`ngvb()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb.md).
 
 ## The model in one paragraph
 
@@ -84,10 +69,7 @@ $`q(\eta)`$ in turn, and it is the more reliable choice. The
 alternative, `method = "SCVI"`, integrates $`\mathbf V`$ out of the
 $`\eta`$ update analytically and so converges in fewer iterations, but
 its collapsed marginal can over-shrink a weak yet genuine effect all the
-way to the Gaussian model. The two agree when the signal is strong or
-clearly absent, and they disagree in the weak-signal regime, so prefer
-SVI unless you have checked that SCVI gives the same answer on your
-problem.
+way to the Gaussian model.
 
 ## Which models and likelihoods are supported
 
@@ -109,16 +91,16 @@ find it with no extra arguments: `iid`, `rw1`, `rw2`, `ar1`, `besag`
 Each of these is a single operator applied to independent noise, so it
 has the dependency matrix $`\mathbf D`$ the method needs.
 
-**Added by hand.** Some models are not auto-detected but are still of
-the operator form, so you build them with
+**Added by hand.** Some models are not auto-detected but are still
+described by
+$`\mathbf D(\boldsymbol\theta)\,\mathbf x \;\overset{d}{=}\; \boldsymbol\Lambda`$,
+so you can build them with
 [`ngvb_operator()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_operator.md)
-or
-[`ngvb_custom()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_custom.md)
-and pass them through `components`. This covers the simultaneous
-autoregression (`sar`), a proper row-standardised CAR (`car`), the
-Ornstein-Uhlenbeck process (`ou`), and `from_Q` – any CAR-type precision
-matrix with non-positive off-diagonals, factored automatically into its
-dependency matrix.
+which expects the matrix $`\mathbf D`$, the vector $`\mathbf h`$. This
+covers the simultaneous autoregression (`sar`) or the Ornstein-Uhlenbeck
+process (`ou`). It is also possible to use the matrices and operators of
+the `ngme2` package to define the LnGM and examples are given at the
+end.
 
 **Not compatible.** Some components are not a single operator applied to
 one field, and the method does not apply to them. The main cases are the
@@ -173,7 +155,7 @@ Now check whether the latent Gaussian assumption holds:
 
 ``` r
 
-ng.check(LGM, compute.fixed = FALSE)
+check <- ng.check(LGM, compute.fixed = FALSE)
 ```
 
 ![](ngvb_files/figure-html/rw1-check-1.png)
@@ -212,7 +194,7 @@ clearly positive.
 
 Beyond the point estimate, you can integrate the mixing variables V out
 entirely by sampling from their variational posterior and refitting the
-LGM at each draw — this gives the Bayes factor against the Gaussian
+LGM at each draw. This gives the Bayes factor against the Gaussian
 model, and, pooled with importance weights, posterior summaries of
 anything the underlying inla() fit reports:
 
@@ -220,16 +202,31 @@ anything the underlying inla() fit reports:
 
 samples <- ngvb_sample(LnGM, n.samples = 30)
 bayes.factor(samples)               # LnGM vs. LGM marginal-likelihood ratio
-#> Bayes factor (non-Gaussian vs Gaussian): 9.96e+23
+#> Bayes factor (non-Gaussian vs Gaussian): 9.95e+23
 #>   log10 BF = 24.00  (decisive)
 #>   weight ESS = 2.2 of 30 draws
-summary(samples, what = "hyperpar") # importance-weighted fixed-effect means/sds, V integrated out
+summary(samples)                    # importance-weighted summaries, V integrated out
 #> Latent non-Gaussian model, V integrated out over 30 draws
-#> Bayes factor vs Gaussian model: 9.96e+23 (log10 = 24.00), weight ESS 2.2
+#> Bayes factor vs Gaussian model: 9.95e+23 (log10 = 24.00), weight ESS 2.2
 #> 
+#> Fixed effects:
+#>   (none)
+#> 
+#> Hyperparameters:
 #>                                              mean         sd
-#> Precision for the Gaussian observations 3583.7129 13656.5406
+#> Precision for the Gaussian observations 3583.4354 13654.6354
 #> Theta1 for x                               2.1163     0.4493
+#> 
+#> Random effects:
+#>   $x (100 nodes)
+#>   ID    mean     sd
+#> 1  1 -0.8755 0.1419
+#> 2  2 -0.6634 0.1094
+#> 3  3 -0.7070 0.0956
+#> 4  4 -0.6998 0.0999
+#> 5  5 -0.8781 0.1213
+#> 6  6 -0.7240 0.1306
+#>   ... 94 more row(s); use what = "random" to print in full
 ```
 
 On the usual scale a $`\log_{10}`$ Bayes factor above $`0.5`$, $`1`$, or
@@ -237,6 +234,150 @@ $`2`$ is substantial, strong, or decisive evidence for the non-Gaussian
 model. Here it is far into the decisive range. The `ess` field is the
 effective number of draws behind the estimate; if it is small, raise
 `n.samples`.
+
+## Geostatistical data: a Matern (SPDE) field
+
+`weatherdata`, bundled with the package, holds pressure readings across
+the Pacific Northwest. Build the mesh first and plot the stations over
+it:
+
+``` r
+
+w    <- read.csv(system.file("extdata", "weatherdata.csv", package = "ngvb"))
+mesh <- inla.mesh.2d(loc = w[, c("lon", "lat")], max.edge = c(1.5, 2.5),
+                     cutoff = 0.3, max.n.strict = 400)
+geo.plot(w[, c("lon", "lat", "press")], mesh = mesh, title = "pressure",
+         palette = "RdBu")
+```
+
+![](ngvb_files/figure-html/spde-data-1.png)
+
+We model pressure as a continuous Matern field through the SPDE
+approach, the standard tool for point-referenced spatial data. The field
+solves a stochastic PDE whose finite-element form gives the operator
+$`\mathbf D=\kappa^2\mathbf C+\mathbf G`$, where $`\mathbf C`$ and
+$`\mathbf G`$ are the mass and stiffness matrices of the mesh. A
+Gaussian Matern smooths the whole surface uniformly, while the
+non-Gaussian version lets a few locations depart more sharply. `ngvb`
+reads $`\mathbf D`$ straight from the fitted `spde` object, so you pass
+nothing extra.
+
+``` r
+
+spde <- inla.spde2.pcmatern(mesh, alpha = 2,
+                            prior.range = c(1, 0.5),    # P(range < 1) = 0.5
+                            prior.sigma = c(10, 0.1))   # P(sigma > 1) = 0.01
+A    <- inla.spde.make.A(mesh, loc = as.matrix(w[, c("lon", "lat")]))
+stk  <- inla.stack(tag = "est", data = list(y = w$press), A = list(A),
+                   effects = list(s = 1:spde$n.spde))
+
+LGM <- inla(y ~ -1 + f(s, model = spde), data = inla.stack.data(stk),
+            control.predictor = list(A = inla.stack.A(stk)),
+            control.compute = list(config = TRUE))
+```
+
+``` r
+
+chk <- ng.check(LGM, compute.random = TRUE)
+```
+
+![](ngvb_files/figure-html/spde-check-1.png)
+
+[`ng.check()`](https://rafaelcabral-ai.github.io/ngvb/reference/ng.check.md)’s
+diagnostic $`d_i(y)`$ above is one instance of a more general result
+(Theorem 2 of Cabral, Bolin & Rue, *JRSS-B* 2025): the sensitivity of
+*any* posterior summary to relaxing Gaussianity is a covariance,
+computable entirely from the Gaussian fit, without ever running
+[`ngvb()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb.md).
+Two instances are built in: the sensitivity of a covariate’s coefficient
+(`chk$sens.fixed`, one column per fixed effect) and the sensitivity of
+the latent field’s own posterior mean at every node
+(`chk$sens.random$s`, available because
+[`ng.check()`](https://rafaelcabral-ai.github.io/ngvb/reference/ng.check.md)
+was called with `compute.random = TRUE` above). So before ever fitting
+the non-Gaussian model, we can already map where its predictions are
+expected to move the most:
+
+``` r
+
+nodes.sens <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2], sens = chk$sens.random$s)
+geo.plot(nodes.sens, mesh = mesh, title = "sensitivity of posterior mean", palette = "RdBu")
+```
+
+![](ngvb_files/figure-html/spde-presens-1.png)
+
+This map is computed entirely from the Gaussian fit above;
+[`ngvb()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb.md) has
+not run yet. We can tell which regions our spatial predictions will
+change the most, and also the direction. Blue means that the posterior
+mean of the latent field will take larger values once we fit the
+non-Gaussian model.
+
+``` r
+
+LnGM <- ngvb(LGM)
+#> Components: s [spde]
+#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.096
+plot(LnGM)
+```
+
+![](ngvb_files/figure-html/spde-fit-1.png)
+
+The mixing variables live on the mesh nodes, so we can map them back
+over space. We plot the ratio $`V_i/h_i`$, which is one where the field
+is Gaussian and larger where it departs from a uniform Matern (for the
+SPDE the weights $`h_i`$ are the mesh mass, so $`V_i/h_i`$ rather than
+$`V_i`$ is the quantity to look at):
+
+``` r
+
+nodes <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2],
+                    Vh = LnGM$V$s / LnGM$h$s)
+geo.plot(nodes, mesh = mesh, title = "V/h")
+```
+
+![](ngvb_files/figure-html/spde-map-1.png)
+
+``` r
+
+samples <- ngvb_sample(LnGM, n.samples = 30, seed = 1)
+bayes.factor(samples)
+#> Bayes factor (non-Gaussian vs Gaussian): 47.1
+#>   log10 BF = 1.67  (strong)
+#>   weight ESS = 12.9 of 30 draws
+```
+
+[`ngvb_sample()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_sample.md)
+also pools the latent field itself through
+`summary(samples, what = "random")`, so we can now compare the
+sensitivity preview above against the actual before/after change in the
+posterior mean:
+
+``` r
+
+post    <- summary(samples, verbose = FALSE)
+
+diff <- post$random$s$mean - LGM$summary.random$s$mean
+nodes.diff <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2], diff = diff)
+geo.plot(nodes.diff, mesh = mesh, title = "LnGM - LGM (posterior mean)", palette = "RdBu")
+```
+
+![](ngvb_files/figure-html/spde-postdiff-1.png)
+
+The two maps pick out the same location. The sensitivity preview
+correlates with the actual change in magnitude, and among the handful of
+nodes it flags as most sensitive the direction agrees too:
+
+``` r
+
+cat(sprintf("correlation(sensitivity, actual change) = %.2f\n",
+            cor(chk$sens.random$s, diff)))
+#> correlation(sensitivity, actual change) = 0.78
+top10 <- order(-abs(chk$sens.random$s))[1:20]
+cat(sprintf("sign agreement among the 20 most sensitive nodes: %.0f%%\n",
+            100 * mean(sign(chk$sens.random$s[top10]) == sign(diff[top10]))))
+#> sign agreement among the 20 most sensitive nodes: 100%
+```
 
 ## Random intercepts and slopes
 
@@ -307,7 +448,7 @@ $`p`$) for both random effects.
 
 LnGM <- ngvb(LGM)
 #> Components: subject [iid], subject2 [iid]
-#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.126, 0.206
+#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.130, 0.203
 plot(LnGM)
 ```
 
@@ -316,16 +457,13 @@ plot(LnGM)
 After fitting the latent non-Gaussian model we see that the intercept
 carries more non-Gaussianity than the slope. A couple of children have
 outlying baselines, while the growth rates are close to Gaussian.
-Nothing was specified by hand: the prior on $`\eta`$ shrank the slope
-component back toward Gaussian on its own and left the intercept free to
-flag its outliers.
 
 ``` r
 
 bayes.factor(LnGM, n.samples = 30, seed = 1)
-#> Bayes factor (non-Gaussian vs Gaussian): 7.83e+05
-#>   log10 BF = 5.89  (decisive)
-#>   weight ESS = 5.9 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 7.88e+05
+#>   log10 BF = 5.90  (decisive)
+#>   weight ESS = 3.1 of 30 draws
 ```
 
 ## Areal data: an intrinsic model (besag)
@@ -367,12 +505,12 @@ LGM <- inla(CRIME ~ 1 + HOVAL + INC +
 ``` r
 
 LGM$summary.hyperpar
-#>                                                 mean           sd  0.025quant
-#> Precision for the Gaussian observations  0.008025099  0.001645283 0.005213437
-#> Precision for s                         56.847555195 94.330838555 0.752799222
+#>                                               mean           sd  0.025quant
+#> Precision for the Gaussian observations  0.0080316  0.001644847 0.005242204
+#> Precision for s                         57.1638799 89.632926477 1.289090539
 #>                                             0.5quant   0.975quant        mode
-#> Precision for the Gaussian observations  0.007881237   0.01166115 0.007629663
-#> Precision for s                         25.178390582 294.92536023 0.902622697
+#> Precision for the Gaussian observations  0.007880677   0.01168902 0.007604842
+#> Precision for s                         27.942104820 284.83005906 2.349096011
 ```
 
 ``` r
@@ -400,103 +538,10 @@ plot(LnGM)
 ``` r
 
 bayes.factor(LnGM, n.samples = 30, seed = 1)
-#> Bayes factor (non-Gaussian vs Gaussian): 1.11
-#>   log10 BF = 0.04  (weak/none)
-#>   weight ESS = 25.4 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 1.04
+#>   log10 BF = 0.02  (weak/none)
+#>   weight ESS = 25.6 of 30 draws
 ```
-
-## Geostatistical data: a Matern (SPDE) field
-
-`weatherdata`, bundled with the package, holds pressure readings across
-the Pacific Northwest. Build the mesh first and plot the stations over
-it:
-
-``` r
-
-w    <- read.csv(system.file("extdata", "weatherdata.csv", package = "ngvb"))
-mesh <- inla.mesh.2d(loc = w[, c("lon", "lat")], max.edge = c(1.5, 2.5),
-                     cutoff = 0.3, max.n.strict = 400)
-geo.plot(w[, c("lon", "lat", "press")], mesh = mesh, title = "pressure",
-         palette = "RdBu")
-```
-
-![](ngvb_files/figure-html/spde-data-1.png)
-
-We model pressure as a continuous Matern field through the SPDE
-approach, the standard tool for point-referenced spatial data. The field
-solves a stochastic PDE whose finite-element form gives the operator
-$`\mathbf D=\kappa^2\mathbf C+\mathbf G`$, where $`\mathbf C`$ and
-$`\mathbf G`$ are the mass and stiffness matrices of the mesh. A
-Gaussian Matern smooths the whole surface uniformly, while the
-non-Gaussian version lets a few locations depart more sharply. `ngvb`
-reads $`\mathbf D`$ straight from the fitted `spde` object, so you pass
-nothing extra.
-
-``` r
-
-spde <- inla.spde2.pcmatern(mesh, alpha = 2,
-                            prior.range = c(1, 0.5),    # P(range < 1) = 0.5
-                            prior.sigma = c(10, 0.1))   # P(sigma > 1) = 0.01
-A    <- inla.spde.make.A(mesh, loc = as.matrix(w[, c("lon", "lat")]))
-stk  <- inla.stack(tag = "est", data = list(y = w$press), A = list(A),
-                   effects = list(s = 1:spde$n.spde))
-
-LGM <- inla(y ~ -1 + f(s, model = spde), data = inla.stack.data(stk),
-            control.predictor = list(A = inla.stack.A(stk)),
-            control.compute = list(config = TRUE))
-```
-
-``` r
-
-ng.check(LGM) 
-```
-
-![](ngvb_files/figure-html/spde-check-1.png)
-
-``` r
-
-LnGM <- ngvb(LGM)
-#> Components: s [spde]
-#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.096
-plot(LnGM)
-```
-
-![](ngvb_files/figure-html/spde-fit-1.png)
-
-The mixing variables live on the mesh nodes, so we can map them back
-over space. We plot the ratio $`V_i/h_i`$, which is one where the field
-is Gaussian and larger where it departs from a uniform Matern (for the
-SPDE the weights $`h_i`$ are the mesh mass, so $`V_i/h_i`$ rather than
-$`V_i`$ is the quantity to look at):
-
-``` r
-
-nodes <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2],
-                    Vh = LnGM$V$s / LnGM$h$s)
-geo.plot(nodes, mesh = mesh, title = "V/h")
-```
-
-![](ngvb_files/figure-html/spde-map-1.png)
-
-``` r
-
-bayes.factor(LnGM, n.samples = 30, seed = 1)
-#> Bayes factor (non-Gaussian vs Gaussian): 60.7
-#>   log10 BF = 1.78  (strong)
-#>   weight ESS = 11.7 of 30 draws
-```
-
-`ngvb` recognises the SPDE component because its `f(...)` model is an
-object built by
-[`inla.spde2.pcmatern()`](https://rdrr.io/pkg/INLA/man/inla.spde2.pcmatern.html).
-It evaluates that argument from the fit’s formula, reads the
-finite-element matrices back from it, and carries over the field’s PC
-prior on the practical range and marginal standard deviation. Only the
-PC-prior parameterization is supported for the non-Gaussian SPDE; a
-field built with the older
-[`inla.spde2.matern()`](https://rdrr.io/pkg/INLA/man/inla.spde2.matern.html)
-is rejected with a message to rebuild it with
-[`inla.spde2.pcmatern()`](https://rdrr.io/pkg/INLA/man/inla.spde2.pcmatern.html).
 
 ## Your own precision matrix with ngvb_custom
 
@@ -632,9 +677,9 @@ areal.plot(map, LnGM$V$s, title = "V")
 ``` r
 
 bayes.factor(LnGM, n.samples = 30, seed = 1)
-#> Bayes factor (non-Gaussian vs Gaussian): 10
-#>   log10 BF = 1.00  (strong)
-#>   weight ESS = 15.7 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 9.59
+#>   log10 BF = 0.98  (substantial)
+#>   weight ESS = 15.4 of 30 draws
 ```
 
 That is the whole custom interface. Give

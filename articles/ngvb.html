@@ -33,15 +33,6 @@
       <ul class="navbar-nav me-auto">
 <li class="active nav-item"><a class="nav-link" href="../articles/ngvb.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-news">
-<li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
-  </ul>
-</li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -79,12 +70,12 @@
 <p>A latent Gaussian model (LGM), the workhorse of R-INLA, places a
 Gaussian prior on a latent field: a random walk, an autoregression, a
 spatial effect, or a set of random effects. That prior is convenient but
-rigid, because it assumes Gaussianity everywhere everywhere. Real data
-often break this assumption in just a few places, such as a sudden jump
-in a time series, one outlying subject, a sharp boundary between
-regions, or a local hotspot in space. A Gaussian model then has to
-compromise. It either over-smooths the interesting feature or inflates
-the variance everywhere to accommodate it.</p>
+rigid, because it assumes Gaussianity everywhere. Real data often break
+this assumption in just a few places, such as a sudden jump in a time
+series, one outlying subject, a sharp boundary between regions, or a
+local hotspot in space. A Gaussian model then has to compromise. It
+either over-smooths the interesting feature or inflates the variance
+everywhere to accommodate it.</p>
 <p><code>ngvb</code> relaxes that single assumption. It keeps everything
 you already have, the same INLA model and the same code, and replaces
 the Gaussian driving noise with a heavier-tailed one. The result adds
@@ -99,16 +90,6 @@ Gaussian assumption, and where.</li>
 <li>
 <code>ngvb(fit)</code> fits the non-Gaussian extension.</li>
 </ul>
-<p>Both auto-detect the models in your fit. Out of the box that covers
-<code>iid</code> random effects, random walks <code>rw1</code> and
-<code>rw2</code>, autoregressions <code>ar1</code>, intrinsic areal
-models <code>besag</code>, and Matern (<code>SPDE</code>) fields.
-Anything else is supplied through <code><a href="../reference/ngvb_operator.html">ngvb_operator()</a></code> /
-<code><a href="../reference/ngvb_custom.html">ngvb_custom()</a></code>, described in the last section.</p>
-<p>Every example below follows the same short recipe: plot the data,
-write down the model, fit the Gaussian version with INLA, check it with
-<code><a href="../reference/ng.check.html">ng.check()</a></code>, and then extend it with
-<code><a href="../reference/ngvb.html">ngvb()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="the-model-in-one-paragraph">The model in one paragraph<a class="anchor" aria-label="anchor" href="#the-model-in-one-paragraph"></a>
@@ -178,10 +159,7 @@ out of the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>η</mi><annotation encoding="application/x-tex">\eta</annotation></semantics></math>
 update analytically and so converges in fewer iterations, but its
 collapsed marginal can over-shrink a weak yet genuine effect all the way
-to the Gaussian model. The two agree when the signal is strong or
-clearly absent, and they disagree in the weak-signal regime, so prefer
-SVI unless you have checked that SCVI gives the same answer on your
-problem.</p>
+to the Gaussian model.</p>
 </div>
 <div class="section level2">
 <h2 id="which-models-and-likelihoods-are-supported">Which models and likelihoods are supported<a class="anchor" aria-label="anchor" href="#which-models-and-likelihoods-are-supported"></a>
@@ -203,14 +181,17 @@ independent noise, so it has the dependency matrix
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐃</mi><annotation encoding="application/x-tex">\mathbf D</annotation></semantics></math>
 the method needs.</p>
 <p><strong>Added by hand.</strong> Some models are not auto-detected but
-are still of the operator form, so you build them with
-<code><a href="../reference/ngvb_operator.html">ngvb_operator()</a></code> or <code><a href="../reference/ngvb_custom.html">ngvb_custom()</a></code> and pass them
-through <code>components</code>. This covers the simultaneous
-autoregression (<code>sar</code>), a proper row-standardised CAR
-(<code>car</code>), the Ornstein-Uhlenbeck process (<code>ou</code>),
-and <code>from_Q</code> – any CAR-type precision matrix with
-non-positive off-diagonals, factored automatically into its dependency
-matrix.</p>
+are still described by
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>𝐱</mi><mspace width="0.278em"></mspace><mover><mo>=</mo><mi>d</mi></mover><mspace width="0.278em"></mspace><mi>𝚲</mi></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)\,\mathbf x \;\overset{d}{=}\; \boldsymbol\Lambda</annotation></semantics></math>,
+so you can build them with <code><a href="../reference/ngvb_operator.html">ngvb_operator()</a></code> which expects
+the matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐃</mi><annotation encoding="application/x-tex">\mathbf D</annotation></semantics></math>,
+the vector
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐡</mi><annotation encoding="application/x-tex">\mathbf h</annotation></semantics></math>.
+This covers the simultaneous autoregression (<code>sar</code>) or the
+Ornstein-Uhlenbeck process (<code>ou</code>). It is also possible to use
+the matrices and operators of the <code>ngme2</code> package to define
+the LnGM and examples are given at the end.</p>
 <p><strong>Not compatible.</strong> Some components are not a single
 operator applied to one field, and the method does not apply to them.
 The main cases are the additive spatial models <code>bym</code>,
@@ -257,7 +238,7 @@ Fit it with INLA:</p>
 <span>            control.compute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>config <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Now check whether the latent Gaussian assumption holds:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span>, compute.fixed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">check</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span>, compute.fixed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/rw1-check-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 <p>The left panel is the per-index sensitivity
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">d_i(y)</annotation></semantics></math>,
@@ -295,22 +276,37 @@ flexibility exactly where it was needed and stayed Gaussian in between.
 The non-Gaussianity parameter is clearly positive.</p>
 <p>Beyond the point estimate, you can integrate the mixing variables V
 out entirely by sampling from their variational posterior and refitting
-the LGM at each draw — this gives the Bayes factor against the Gaussian
+the LGM at each draw. This gives the Bayes factor against the Gaussian
 model, and, pooled with importance weights, posterior summaries of
 anything the underlying inla() fit reports:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb_sample.html">ngvb_sample</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span>               <span class="co"># LnGM vs. LGM marginal-likelihood ratio</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 9.96e+23</span></span>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 9.95e+23</span></span>
 <span><span class="co">#&gt;   log10 BF = 24.00  (decisive)</span></span>
 <span><span class="co">#&gt;   weight ESS = 2.2 of 30 draws</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">samples</span>, what <span class="op">=</span> <span class="st">"hyperpar"</span><span class="op">)</span> <span class="co"># importance-weighted fixed-effect means/sds, V integrated out</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span>                    <span class="co"># importance-weighted summaries, V integrated out</span></span>
 <span><span class="co">#&gt; Latent non-Gaussian model, V integrated out over 30 draws</span></span>
-<span><span class="co">#&gt; Bayes factor vs Gaussian model: 9.96e+23 (log10 = 24.00), weight ESS 2.2</span></span>
+<span><span class="co">#&gt; Bayes factor vs Gaussian model: 9.95e+23 (log10 = 24.00), weight ESS 2.2</span></span>
 <span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Fixed effects:</span></span>
+<span><span class="co">#&gt;   (none)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Hyperparameters:</span></span>
 <span><span class="co">#&gt;                                              mean         sd</span></span>
-<span><span class="co">#&gt; Precision for the Gaussian observations 3583.7129 13656.5406</span></span>
-<span><span class="co">#&gt; Theta1 for x                               2.1163     0.4493</span></span></code></pre></div>
+<span><span class="co">#&gt; Precision for the Gaussian observations 3583.4354 13654.6354</span></span>
+<span><span class="co">#&gt; Theta1 for x                               2.1163     0.4493</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Random effects:</span></span>
+<span><span class="co">#&gt;   $x (100 nodes)</span></span>
+<span><span class="co">#&gt;   ID    mean     sd</span></span>
+<span><span class="co">#&gt; 1  1 -0.8755 0.1419</span></span>
+<span><span class="co">#&gt; 2  2 -0.6634 0.1094</span></span>
+<span><span class="co">#&gt; 3  3 -0.7070 0.0956</span></span>
+<span><span class="co">#&gt; 4  4 -0.6998 0.0999</span></span>
+<span><span class="co">#&gt; 5  5 -0.8781 0.1213</span></span>
+<span><span class="co">#&gt; 6  6 -0.7240 0.1306</span></span>
+<span><span class="co">#&gt;   ... 94 more row(s); use what = "random" to print in full</span></span></code></pre></div>
 <p>On the usual scale a
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mn>10</mn></msub><annotation encoding="application/x-tex">\log_{10}</annotation></semantics></math>
 Bayes factor above
@@ -324,12 +320,127 @@ the effective number of draws behind the estimate; if it is small, raise
 <code>n.samples</code>.</p>
 </div>
 <div class="section level2">
+<h2 id="geostatistical-data-a-matern-spde-field">Geostatistical data: a Matern (SPDE) field<a class="anchor" aria-label="anchor" href="#geostatistical-data-a-matern-spde-field"></a>
+</h2>
+<p><code>weatherdata</code>, bundled with the package, holds pressure
+readings across the Pacific Northwest. Build the mesh first and plot the
+stations over it:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">w</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"weatherdata.csv"</span>, package <span class="op">=</span> <span class="st">"ngvb"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.mesh.2d.html" class="external-link">inla.mesh.2d</a></span><span class="op">(</span>loc <span class="op">=</span> <span class="va">w</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span><span class="op">]</span>, max.edge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">2.5</span><span class="op">)</span>,</span>
+<span>                     cutoff <span class="op">=</span> <span class="fl">0.3</span>, max.n.strict <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/geo.plot.html">geo.plot</a></span><span class="op">(</span><span class="va">w</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span>, <span class="st">"press"</span><span class="op">)</span><span class="op">]</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, title <span class="op">=</span> <span class="st">"pressure"</span>,</span>
+<span>         palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ngvb_files/figure-html/spde-data-1.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
+<p>We model pressure as a continuous Matern field through the SPDE
+approach, the standard tool for point-referenced spatial data. The field
+solves a stochastic PDE whose finite-element form gives the operator
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo>=</mo><msup><mi>κ</mi><mn>2</mn></msup><mi>𝐂</mi><mo>+</mo><mi>𝐆</mi></mrow><annotation encoding="application/x-tex">\mathbf D=\kappa^2\mathbf C+\mathbf G</annotation></semantics></math>,
+where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐂</mi><annotation encoding="application/x-tex">\mathbf C</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐆</mi><annotation encoding="application/x-tex">\mathbf G</annotation></semantics></math>
+are the mass and stiffness matrices of the mesh. A Gaussian Matern
+smooths the whole surface uniformly, while the non-Gaussian version lets
+a few locations depart more sharply. <code>ngvb</code> reads
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐃</mi><annotation encoding="application/x-tex">\mathbf D</annotation></semantics></math>
+straight from the fitted <code>spde</code> object, so you pass nothing
+extra.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spde</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.spde2.pcmatern.html" class="external-link">inla.spde2.pcmatern</a></span><span class="op">(</span><span class="va">mesh</span>, alpha <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>                            prior.range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span>,    <span class="co"># P(range &lt; 1) = 0.5</span></span>
+<span>                            prior.sigma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span>   <span class="co"># P(sigma &gt; 1) = 0.01</span></span>
+<span><span class="va">A</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.spde.make.A.html" class="external-link">inla.spde.make.A</a></span><span class="op">(</span><span class="va">mesh</span>, loc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">w</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">stk</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.stack.html" class="external-link">inla.stack</a></span><span class="op">(</span>tag <span class="op">=</span> <span class="st">"est"</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">w</span><span class="op">$</span><span class="va">press</span><span class="op">)</span>, A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">A</span><span class="op">)</span>,</span>
+<span>                   effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>s <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">spde</span><span class="op">$</span><span class="va">n.spde</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">LGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.html" class="external-link">inla</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="op">-</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/f.html" class="external-link">f</a></span><span class="op">(</span><span class="va">s</span>, model <span class="op">=</span> <span class="va">spde</span><span class="op">)</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.stack.html" class="external-link">inla.stack.data</a></span><span class="op">(</span><span class="va">stk</span><span class="op">)</span>,</span>
+<span>            control.predictor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.stack.html" class="external-link">inla.stack.A</a></span><span class="op">(</span><span class="va">stk</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>            control.compute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>config <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">chk</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span>, compute.random <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ngvb_files/figure-html/spde-check-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<p><code><a href="../reference/ng.check.html">ng.check()</a></code>’s diagnostic
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">d_i(y)</annotation></semantics></math>
+above is one instance of a more general result (Theorem 2 of Cabral,
+Bolin &amp; Rue, <em>JRSS-B</em> 2025): the sensitivity of <em>any</em>
+posterior summary to relaxing Gaussianity is a covariance, computable
+entirely from the Gaussian fit, without ever running
+<code><a href="../reference/ngvb.html">ngvb()</a></code>. Two instances are built in: the sensitivity of a
+covariate’s coefficient (<code>chk$sens.fixed</code>, one column per
+fixed effect) and the sensitivity of the latent field’s own posterior
+mean at every node (<code>chk$sens.random$s</code>, available because
+<code><a href="../reference/ng.check.html">ng.check()</a></code> was called with
+<code>compute.random = TRUE</code> above). So before ever fitting the
+non-Gaussian model, we can already map where its predictions are
+expected to move the most:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nodes.sens</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>lon <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, lat <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, sens <span class="op">=</span> <span class="va">chk</span><span class="op">$</span><span class="va">sens.random</span><span class="op">$</span><span class="va">s</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/geo.plot.html">geo.plot</a></span><span class="op">(</span><span class="va">nodes.sens</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, title <span class="op">=</span> <span class="st">"sensitivity of posterior mean"</span>, palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ngvb_files/figure-html/spde-presens-1.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
+<p>This map is computed entirely from the Gaussian fit above;
+<code><a href="../reference/ngvb.html">ngvb()</a></code> has not run yet. We can tell which regions our
+spatial predictions will change the most, and also the direction. Blue
+means that the posterior mean of the latent field will take larger
+values once we fit the non-Gaussian model.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">LnGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb.html">ngvb</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Components: s [spde]</span></span>
+<span><span class="co">#&gt; ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.096</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">LnGM</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ngvb_files/figure-html/spde-fit-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<p>The mixing variables live on the mesh nodes, so we can map them back
+over space. We plot the ratio
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>i</mi></msub><mi>/</mi><msub><mi>h</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">V_i/h_i</annotation></semantics></math>,
+which is one where the field is Gaussian and larger where it departs
+from a uniform Matern (for the SPDE the weights
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>h</mi><mi>i</mi></msub><annotation encoding="application/x-tex">h_i</annotation></semantics></math>
+are the mesh mass, so
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>i</mi></msub><mi>/</mi><msub><mi>h</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">V_i/h_i</annotation></semantics></math>
+rather than
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>V</mi><mi>i</mi></msub><annotation encoding="application/x-tex">V_i</annotation></semantics></math>
+is the quantity to look at):</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>lon <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, lat <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>,</span>
+<span>                    Vh <span class="op">=</span> <span class="va">LnGM</span><span class="op">$</span><span class="va">V</span><span class="op">$</span><span class="va">s</span> <span class="op">/</span> <span class="va">LnGM</span><span class="op">$</span><span class="va">h</span><span class="op">$</span><span class="va">s</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/geo.plot.html">geo.plot</a></span><span class="op">(</span><span class="va">nodes</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, title <span class="op">=</span> <span class="st">"V/h"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ngvb_files/figure-html/spde-map-1.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb_sample.html">ngvb_sample</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 47.1</span></span>
+<span><span class="co">#&gt;   log10 BF = 1.67  (strong)</span></span>
+<span><span class="co">#&gt;   weight ESS = 12.9 of 30 draws</span></span></code></pre></div>
+<p><code><a href="../reference/ngvb_sample.html">ngvb_sample()</a></code> also pools the latent field itself through
+<code>summary(samples, what = "random")</code>, so we can now compare
+the sensitivity preview above against the actual before/after change in
+the posterior mean:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">post</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">samples</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">diff</span> <span class="op">&lt;-</span> <span class="va">post</span><span class="op">$</span><span class="va">random</span><span class="op">$</span><span class="va">s</span><span class="op">$</span><span class="va">mean</span> <span class="op">-</span> <span class="va">LGM</span><span class="op">$</span><span class="va">summary.random</span><span class="op">$</span><span class="va">s</span><span class="op">$</span><span class="va">mean</span></span>
+<span><span class="va">nodes.diff</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>lon <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, lat <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, diff <span class="op">=</span> <span class="va">diff</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/geo.plot.html">geo.plot</a></span><span class="op">(</span><span class="va">nodes.diff</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, title <span class="op">=</span> <span class="st">"LnGM - LGM (posterior mean)"</span>, palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ngvb_files/figure-html/spde-postdiff-1.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
+<p>The two maps pick out the same location. The sensitivity preview
+correlates with the actual change in magnitude, and among the handful of
+nodes it flags as most sensitive the direction agrees too:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"correlation(sensitivity, actual change) = %.2f\n"</span>,</span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">chk</span><span class="op">$</span><span class="va">sens.random</span><span class="op">$</span><span class="va">s</span>, <span class="va">diff</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; correlation(sensitivity, actual change) = 0.78</span></span>
+<span><span class="va">top10</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">chk</span><span class="op">$</span><span class="va">sens.random</span><span class="op">$</span><span class="va">s</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"sign agreement among the 20 most sensitive nodes: %.0f%%\n"</span>,</span>
+<span>            <span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sign.html" class="external-link">sign</a></span><span class="op">(</span><span class="va">chk</span><span class="op">$</span><span class="va">sens.random</span><span class="op">$</span><span class="va">s</span><span class="op">[</span><span class="va">top10</span><span class="op">]</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/sign.html" class="external-link">sign</a></span><span class="op">(</span><span class="va">diff</span><span class="op">[</span><span class="va">top10</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; sign agreement among the 20 most sensitive nodes: 100%</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="random-intercepts-and-slopes">Random intercepts and slopes<a class="anchor" aria-label="anchor" href="#random-intercepts-and-slopes"></a>
 </h2>
 <p><code>Orthodont</code> records a growth measurement for 27 children
 at four ages, together with a sex indicator and time coded two ways. A
 quick look at the raw data frame:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">Orthodont</span><span class="op">$</span><span class="va">age</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">14</span><span class="op">)</span><span class="op">[</span><span class="va">Orthodont</span><span class="op">$</span><span class="va">time</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu">ggplot</span><span class="op">(</span><span class="va">Orthodont</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -354,7 +465,7 @@ slope. We give every child its own intercept and its own slope, as two
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>b</mi><mi>k</mi></msub><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mi>/</mi><msub><mi>τ</mi><mi>b</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">b_k \sim N(0, 1/\tau_b)</annotation></semantics></math>
 across children.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">formula</span> <span class="op">&lt;-</span> <span class="va">value</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">Female</span> <span class="op">+</span> <span class="va">time</span> <span class="op">+</span> <span class="va">tF</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/f.html" class="external-link">f</a></span><span class="op">(</span><span class="va">subject</span>,  model <span class="op">=</span> <span class="st">"iid"</span><span class="op">)</span> <span class="op">+</span>      <span class="co"># random intercept, one per child</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/f.html" class="external-link">f</a></span><span class="op">(</span><span class="va">subject2</span>, <span class="va">time</span>, model <span class="op">=</span> <span class="st">"iid"</span><span class="op">)</span>  <span class="co"># random slope, one per child</span></span>
@@ -368,31 +479,27 @@ the outlier, or it widens the distribution for everyone to accommodate
 them. A non-Gaussian random effect keeps a tight distribution for the
 typical children and lets the few outliers stand out.
 <code><a href="../reference/ng.check.html">ng.check()</a></code> reports one diagnostic per component:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span>, compute.fixed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/ortho-check-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 <p>We see that no substancial evidence of non-Gaussianity was found
 (small
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>)
 for both random effects.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LnGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb.html">ngvb</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Components: subject [iid], subject2 [iid]</span></span>
-<span><span class="co">#&gt; ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.126, 0.206</span></span>
+<span><span class="co">#&gt; ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.130, 0.203</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">LnGM</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/ortho-ngvb-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 <p>After fitting the latent non-Gaussian model we see that the intercept
 carries more non-Gaussianity than the slope. A couple of children have
-outlying baselines, while the growth rates are close to Gaussian.
-Nothing was specified by hand: the prior on
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>η</mi><annotation encoding="application/x-tex">\eta</annotation></semantics></math>
-shrank the slope component back toward Gaussian on its own and left the
-intercept free to flag its outliers.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+outlying baselines, while the growth rates are close to Gaussian.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 7.83e+05</span></span>
-<span><span class="co">#&gt;   log10 BF = 5.89  (decisive)</span></span>
-<span><span class="co">#&gt;   weight ESS = 5.9 of 30 draws</span></span></code></pre></div>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 7.88e+05</span></span>
+<span><span class="co">#&gt;   log10 BF = 5.90  (decisive)</span></span>
+<span><span class="co">#&gt;   weight ESS = 3.1 of 30 draws</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="areal-data-an-intrinsic-model-besag">Areal data: an intrinsic model (besag)<a class="anchor" aria-label="anchor" href="#areal-data-an-intrinsic-model-besag"></a>
@@ -400,7 +507,7 @@ intercept free to flag its outliers.</p>
 <p>Residential burglary rates in 49 counties of Columbus, Ohio, come
 with the <code>spData</code> package. Plot the response on the map
 first:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-spatial/spdep/" class="external-link">spdep</a></span><span class="op">)</span></span>
 <span><span class="va">map</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shapes/columbus.gpkg"</span>, package <span class="op">=</span> <span class="st">"spData"</span><span class="op">)</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/areal.plot.html">areal.plot</a></span><span class="op">(</span><span class="va">map</span>, <span class="va">map</span><span class="op">$</span><span class="va">CRIME</span>, title <span class="op">=</span> <span class="st">"crime"</span><span class="op">)</span></span></code></pre></div>
@@ -411,7 +518,7 @@ differences across the edges of the adjacency graph,
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><msub><mi>x</mi><mi>j</mi></msub><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><mn>1</mn><mi>/</mi><mi>τ</mi><mo stretchy="false" form="postfix">)</mo><mspace width="1.0em"></mspace><mrow><mtext mathvariant="normal">for each edge </mtext><mspace width="0.333em"></mspace></mrow><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">x_i - x_j \sim N(0,\,1/\tau)\quad\text{for each edge }(i,j).</annotation></semantics></math>
 The non-Gaussian version allows a few sharp boundaries between otherwise
 smooth regions. Build the adjacency and fit the Gaussian model:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">map</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CRIME"</span>, <span class="st">"HOVAL"</span>, <span class="st">"INC"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">s</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">nb</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/spdep/reference/poly2nb.html" class="external-link">poly2nb</a></span><span class="op">(</span><span class="va">map</span><span class="op">)</span></span>
@@ -421,110 +528,32 @@ smooth regions. Build the adjacency and fit the Gaussian model:</p>
 <span>              <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/f.html" class="external-link">f</a></span><span class="op">(</span><span class="va">s</span>, model <span class="op">=</span> <span class="st">"besag"</span>, graph <span class="op">=</span> <span class="va">Wadj</span>, scale.model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                hyper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>prec <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>prior <span class="op">=</span> <span class="st">"loggamma"</span>, param <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.01</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>            data <span class="op">=</span> <span class="va">d</span>, control.compute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>config <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LGM</span><span class="op">$</span><span class="va">summary.hyperpar</span></span>
-<span><span class="co">#&gt;                                                 mean           sd  0.025quant</span></span>
-<span><span class="co">#&gt; Precision for the Gaussian observations  0.008025099  0.001645283 0.005213437</span></span>
-<span><span class="co">#&gt; Precision for s                         56.847555195 94.330838555 0.752799222</span></span>
+<span><span class="co">#&gt;                                               mean           sd  0.025quant</span></span>
+<span><span class="co">#&gt; Precision for the Gaussian observations  0.0080316  0.001644847 0.005242204</span></span>
+<span><span class="co">#&gt; Precision for s                         57.1638799 89.632926477 1.289090539</span></span>
 <span><span class="co">#&gt;                                             0.5quant   0.975quant        mode</span></span>
-<span><span class="co">#&gt; Precision for the Gaussian observations  0.007881237   0.01166115 0.007629663</span></span>
-<span><span class="co">#&gt; Precision for s                         25.178390582 294.92536023 0.902622697</span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; Precision for the Gaussian observations  0.007880677   0.01168902 0.007604842</span></span>
+<span><span class="co">#&gt; Precision for s                         27.942104820 284.83005906 2.349096011</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span>, compute.fixed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>   <span class="co"># areal model auto-detected</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/besag-check-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 <p>The 118 edges of this graph all show a similarly small discrepancy
 from the Gaussian reference. This field is essentially Gaussian, and
 both the previous checking procedure (<code>ng.check</code>) and the
 latent non-Gaussian fitting (<code>ngvb</code>) show that.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LnGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb.html">ngvb</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Components: s [car]</span></span>
 <span><span class="co">#&gt; ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.073</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">LnGM</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/besag-fit-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 1.11</span></span>
-<span><span class="co">#&gt;   log10 BF = 0.04  (weak/none)</span></span>
-<span><span class="co">#&gt;   weight ESS = 25.4 of 30 draws</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="geostatistical-data-a-matern-spde-field">Geostatistical data: a Matern (SPDE) field<a class="anchor" aria-label="anchor" href="#geostatistical-data-a-matern-spde-field"></a>
-</h2>
-<p><code>weatherdata</code>, bundled with the package, holds pressure
-readings across the Pacific Northwest. Build the mesh first and plot the
-stations over it:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">w</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"weatherdata.csv"</span>, package <span class="op">=</span> <span class="st">"ngvb"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.mesh.2d.html" class="external-link">inla.mesh.2d</a></span><span class="op">(</span>loc <span class="op">=</span> <span class="va">w</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span><span class="op">]</span>, max.edge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">2.5</span><span class="op">)</span>,</span>
-<span>                     cutoff <span class="op">=</span> <span class="fl">0.3</span>, max.n.strict <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/geo.plot.html">geo.plot</a></span><span class="op">(</span><span class="va">w</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span>, <span class="st">"press"</span><span class="op">)</span><span class="op">]</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, title <span class="op">=</span> <span class="st">"pressure"</span>,</span>
-<span>         palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ngvb_files/figure-html/spde-data-1.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
-<p>We model pressure as a continuous Matern field through the SPDE
-approach, the standard tool for point-referenced spatial data. The field
-solves a stochastic PDE whose finite-element form gives the operator
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo>=</mo><msup><mi>κ</mi><mn>2</mn></msup><mi>𝐂</mi><mo>+</mo><mi>𝐆</mi></mrow><annotation encoding="application/x-tex">\mathbf D=\kappa^2\mathbf C+\mathbf G</annotation></semantics></math>,
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐂</mi><annotation encoding="application/x-tex">\mathbf C</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐆</mi><annotation encoding="application/x-tex">\mathbf G</annotation></semantics></math>
-are the mass and stiffness matrices of the mesh. A Gaussian Matern
-smooths the whole surface uniformly, while the non-Gaussian version lets
-a few locations depart more sharply. <code>ngvb</code> reads
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐃</mi><annotation encoding="application/x-tex">\mathbf D</annotation></semantics></math>
-straight from the fitted <code>spde</code> object, so you pass nothing
-extra.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">spde</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.spde2.pcmatern.html" class="external-link">inla.spde2.pcmatern</a></span><span class="op">(</span><span class="va">mesh</span>, alpha <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>                            prior.range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span>,    <span class="co"># P(range &lt; 1) = 0.5</span></span>
-<span>                            prior.sigma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span>   <span class="co"># P(sigma &gt; 1) = 0.01</span></span>
-<span><span class="va">A</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.spde.make.A.html" class="external-link">inla.spde.make.A</a></span><span class="op">(</span><span class="va">mesh</span>, loc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">w</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">stk</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.stack.html" class="external-link">inla.stack</a></span><span class="op">(</span>tag <span class="op">=</span> <span class="st">"est"</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">w</span><span class="op">$</span><span class="va">press</span><span class="op">)</span>, A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">A</span><span class="op">)</span>,</span>
-<span>                   effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>s <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">spde</span><span class="op">$</span><span class="va">n.spde</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">LGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.html" class="external-link">inla</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="op">-</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/f.html" class="external-link">f</a></span><span class="op">(</span><span class="va">s</span>, model <span class="op">=</span> <span class="va">spde</span><span class="op">)</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.stack.html" class="external-link">inla.stack.data</a></span><span class="op">(</span><span class="va">stk</span><span class="op">)</span>,</span>
-<span>            control.predictor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.stack.html" class="external-link">inla.stack.A</a></span><span class="op">(</span><span class="va">stk</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>            control.compute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>config <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span> </span></code></pre></div>
-<p><img src="ngvb_files/figure-html/spde-check-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">LnGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb.html">ngvb</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Components: s [spde]</span></span>
-<span><span class="co">#&gt; ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.096</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">LnGM</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ngvb_files/figure-html/spde-fit-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
-<p>The mixing variables live on the mesh nodes, so we can map them back
-over space. We plot the ratio
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>i</mi></msub><mi>/</mi><msub><mi>h</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">V_i/h_i</annotation></semantics></math>,
-which is one where the field is Gaussian and larger where it departs
-from a uniform Matern (for the SPDE the weights
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>h</mi><mi>i</mi></msub><annotation encoding="application/x-tex">h_i</annotation></semantics></math>
-are the mesh mass, so
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>i</mi></msub><mi>/</mi><msub><mi>h</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">V_i/h_i</annotation></semantics></math>
-rather than
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>V</mi><mi>i</mi></msub><annotation encoding="application/x-tex">V_i</annotation></semantics></math>
-is the quantity to look at):</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>lon <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, lat <span class="op">=</span> <span class="va">mesh</span><span class="op">$</span><span class="va">loc</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>,</span>
-<span>                    Vh <span class="op">=</span> <span class="va">LnGM</span><span class="op">$</span><span class="va">V</span><span class="op">$</span><span class="va">s</span> <span class="op">/</span> <span class="va">LnGM</span><span class="op">$</span><span class="va">h</span><span class="op">$</span><span class="va">s</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/geo.plot.html">geo.plot</a></span><span class="op">(</span><span class="va">nodes</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, title <span class="op">=</span> <span class="st">"V/h"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ngvb_files/figure-html/spde-map-1.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 60.7</span></span>
-<span><span class="co">#&gt;   log10 BF = 1.78  (strong)</span></span>
-<span><span class="co">#&gt;   weight ESS = 11.7 of 30 draws</span></span></code></pre></div>
-<p><code>ngvb</code> recognises the SPDE component because its
-<code>f(...)</code> model is an object built by
-<code><a href="https://rdrr.io/pkg/INLA/man/inla.spde2.pcmatern.html" class="external-link">inla.spde2.pcmatern()</a></code>. It evaluates that argument from the
-fit’s formula, reads the finite-element matrices back from it, and
-carries over the field’s PC prior on the practical range and marginal
-standard deviation. Only the PC-prior parameterization is supported for
-the non-Gaussian SPDE; a field built with the older
-<code><a href="https://rdrr.io/pkg/INLA/man/inla.spde2.matern.html" class="external-link">inla.spde2.matern()</a></code> is rejected with a message to rebuild
-it with <code><a href="https://rdrr.io/pkg/INLA/man/inla.spde2.pcmatern.html" class="external-link">inla.spde2.pcmatern()</a></code>.</p>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 1.04</span></span>
+<span><span class="co">#&gt;   log10 BF = 0.02  (weak/none)</span></span>
+<span><span class="co">#&gt;   weight ESS = 25.6 of 30 draws</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="your-own-precision-matrix-with-ngvb_custom">Your own precision matrix with ngvb_custom<a class="anchor" aria-label="anchor" href="#your-own-precision-matrix-with-ngvb_custom"></a>
@@ -557,7 +586,7 @@ areal model, think SAR.</p>
 the counties themselves, so we can map them directly.</p>
 <p>Here is the full definition, and each argument is explained just
 below it.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">W</span>      <span class="op">&lt;-</span> <span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/Diagonal.html" class="external-link">Diagonal</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">Wadj</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">Wadj</span>    <span class="co"># row-standardise</span></span>
 <span><span class="va">N</span>      <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span></span>
 <span><span class="va">eigenv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/complex.html" class="external-link">Re</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/eigen.html" class="external-link">eigen</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span>, only.values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">values</span><span class="op">)</span></span>
@@ -652,7 +681,7 @@ those functions reference, such as <code>W</code> and
 <code>eigenv</code>, is captured automatically.</p>
 <p>With the operator defined, fit the Gaussian SAR through the same
 engine and then extend it:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LGM</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.html" class="external-link">inla</a></span><span class="op">(</span><span class="va">CRIME</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">HOVAL</span> <span class="op">+</span> <span class="va">INC</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/INLA/man/f.html" class="external-link">f</a></span><span class="op">(</span><span class="va">s</span>, model <span class="op">=</span> <span class="fu"><a href="../reference/ngvb_rgeneric.html">ngvb_rgeneric</a></span><span class="op">(</span><span class="va">op_sar</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">d</span>, control.compute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>config <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">LnGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb.html">ngvb</a></span><span class="op">(</span><span class="va">LGM</span>, components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>s <span class="op">=</span> <span class="va">op_sar</span><span class="op">)</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -662,14 +691,14 @@ engine and then extend it:</p>
 straight back on the map. Low values are yellow and high values are red,
 so the reddest counties are where the model added the most flexibility,
 meaning the largest local departures from the smooth spatial field:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/areal.plot.html">areal.plot</a></span><span class="op">(</span><span class="va">map</span>, <span class="va">LnGM</span><span class="op">$</span><span class="va">V</span><span class="op">$</span><span class="va">s</span>, title <span class="op">=</span> <span class="st">"V"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/sar-map-1.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 10</span></span>
-<span><span class="co">#&gt;   log10 BF = 1.00  (strong)</span></span>
-<span><span class="co">#&gt;   weight ESS = 15.7 of 30 draws</span></span></code></pre></div>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 9.59</span></span>
+<span><span class="co">#&gt;   log10 BF = 0.98  (substantial)</span></span>
+<span><span class="co">#&gt;   weight ESS = 15.4 of 30 draws</span></span></code></pre></div>
 <p>That is the whole custom interface. Give <code><a href="../reference/ngvb_custom.html">ngvb_custom()</a></code> a
 function <code>D(theta)</code> and a vector <code>h</code>, optionally a
 prior and a normalizing constant, and any Gaussian model whose precision
@@ -688,7 +717,7 @@ operators among them). Its operator objects expose
 the dependency matrix D you need, as a function of a hyperparameter, and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>h</mi><annotation encoding="application/x-tex">h</annotation></semantics></math>.
 For an AR(1) field, for example:</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ngme_ar1</span> <span class="op">&lt;-</span> <span class="fu">ngme2</span><span class="fu">::</span><span class="fu">ar1</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">N</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">op_ar1_ngme2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb_custom.html">ngvb_custom</a></span><span class="op">(</span></span>

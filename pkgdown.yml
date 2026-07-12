@@ -3,7 +3,7 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   ngvb: ngvb.html
-last_built: 2026-07-11T13:53Z
+last_built: 2026-07-12T09:06Z
 urls:
   reference: https://rafaelcabral-ai.github.io/ngvb/reference
   article: https://rafaelcabral-ai.github.io/ngvb/articles

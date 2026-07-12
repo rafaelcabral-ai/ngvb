@@ -17,13 +17,6 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/ngvb.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
-  </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/rafaelcabral-ai/ngvb/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -51,6 +44,7 @@
 <span>  selection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  components <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  compute.fixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  compute.random <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  plot <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -76,6 +70,21 @@
 to each component's non-Gaussianity parameter.</p></dd>
 
 
+<dt id="arg-compute-random">compute.random<a class="anchor" aria-label="anchor" href="#arg-compute-random"></a></dt>
+<dd><p>If `TRUE`, also return, for each checked component, the
+sensitivity of *its own* posterior mean at every node to its own
+non-Gaussianity – i.e. how much each node's fitted value would move under
+[ngvb()], estimated from the base (Gaussian) fit alone, without actually
+fitting the non-Gaussian model. This is the same Bayes-factor-sensitivity
+theory used for `sens.fixed` (Theorem 2 of Cabral, Bolin &amp; Rue, JRSS-B
+2025), applied to the component's own field instead of a fixed effect: it
+reuses the cross-covariance already computed for `d`, so it costs one
+extra matrix multiply per hyperparameter configuration, not a refit.
+Useful as a preview – e.g. mapped over an SPDE mesh – of where a
+subsequent `ngvb()` fit is expected to change the predictions the most,
+before actually running it.</p></dd>
+
+
 <dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
 <dd><p>If `TRUE` (default), draw the diagnostic plots (see [plot.ngvb.check()]):
 per-index Bayes-factor sensitivity, and the observed overall sensitivity against
@@ -88,7 +97,9 @@ its Gaussian reference distribution.</p></dd>
   hyperparameter posterior mode \(\hat\gamma\): the BF sensitivity `s0`, the
   per-index contributions `d`, and (Gaussian response) the reference SD `sd.ref`
   and `p.value`; the hyperparameter-mixture averages are also kept as
-  `s0.mixture` / `d.mixture`. Plus `sens.fixed` if requested.</p>
+  `s0.mixture` / `d.mixture`. Plus `sens.fixed` if `compute.fixed = TRUE`, and
+  `sens.random` (a named list, one vector per checked component, aligned with
+  `selection`) if `compute.random = TRUE`.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -12,9 +12,9 @@ LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = T
 ng.check(LGM)       # is the latent Gaussian assumption adequate, and where not?
 LnGM <- ngvb(LGM)   # fit the non-Gaussian extension
 
-samples <- ngvb_sample(LnGM, n.samples = 30) # sample non-gaussian V from variational posterior + fit R-INLA models
+samples <- ngvb_sample(LnGM, n.samples = 30) # sample non-gaussian V from the variational posterior + fit R-INLA models
 bayes.factor(samples)               # how much better the LnGM is, with V integrated out?
-summary(samples)                    # summary of fixed effects + hyperparameters of the LnGM
+summary(samples)                    # summary of random effects + fixed effects + hyperparameters of the LnGM
 ```
 
 ## Installation
@@ -63,8 +63,6 @@ auto-detected models:
 | Intrinsic CAR (areal) | `"besag"` | auto (graph recovered) |
 | Matérn / SPDE | `inla.spde2.pcmatern(mesh, prior.range =, prior.sigma =)` | auto (read from the fit) |
 | Seasonal | `"seasonal"` | auto |
-| Structure matrix (any PSD `Cmatrix`) | `"generic0"` | `ngvb_operator("generic0", C = )` |
-| Any CAR-type precision `Q` (non-positive off-diagonals) | — | `ngvb_operator("from_Q", Q = )` |
 | SAR, proper CAR, OU | — | [`ngvb_operator()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_operator.md) / [`ngvb_custom()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_custom.md) |
 | Your own precision, or borrowed from [ngme2](https://davidbolin.github.io/ngme2/) | — | `ngvb_custom(D, h, ...)` |
 

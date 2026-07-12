@@ -6,8 +6,8 @@ engine implements the conditional precision
 \(Q(\theta, V) = D(\theta)^T \mathrm{diag}(1/V) D(\theta)\) and owns the
 V-dependent normalizing constant, driven by a model registry
 ([ngvb_operator()]) covering iid, rw1, rw2, ar1, Ornstein-Uhlenbeck,
-intrinsic-CAR (besag), SAR, SPDE/Matern, seasonal and generic structure-matrix
-models; anything else is added with [ngvb_custom()]. [ngvb_sample()] and
+intrinsic-CAR (besag), SAR, SPDE/Matern and seasonal models; anything else is
+added with [ngvb_custom()]. [ngvb_sample()] and
 [bayes.factor()] integrate the mixing variables out for a marginal-likelihood
 comparison against the Gaussian model.'><meta property="og:description" content='"ngvb" stands for non-Gaussian variational Bayes. Checks the latent
 Gaussian assumption ([ng.check()]) and fits latent
@@ -16,8 +16,8 @@ engine implements the conditional precision
 \(Q(\theta, V) = D(\theta)^T \mathrm{diag}(1/V) D(\theta)\) and owns the
 V-dependent normalizing constant, driven by a model registry
 ([ngvb_operator()]) covering iid, rw1, rw2, ar1, Ornstein-Uhlenbeck,
-intrinsic-CAR (besag), SAR, SPDE/Matern, seasonal and generic structure-matrix
-models; anything else is added with [ngvb_custom()]. [ngvb_sample()] and
+intrinsic-CAR (besag), SAR, SPDE/Matern and seasonal models; anything else is
+added with [ngvb_custom()]. [ngvb_sample()] and
 [bayes.factor()] integrate the mixing variables out for a marginal-likelihood
 comparison against the Gaussian model.'></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -37,13 +37,6 @@ comparison against the Gaussian model.'></head><body>
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/ngvb.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
-  </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/rafaelcabral-ai/ngvb/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -68,8 +61,8 @@ engine implements the conditional precision
 \(Q(\theta, V) = D(\theta)^T \mathrm{diag}(1/V) D(\theta)\) and owns the
 V-dependent normalizing constant, driven by a model registry
 ([ngvb_operator()]) covering iid, rw1, rw2, ar1, Ornstein-Uhlenbeck,
-intrinsic-CAR (besag), SAR, SPDE/Matern, seasonal and generic structure-matrix
-models; anything else is added with [ngvb_custom()]. [ngvb_sample()] and
+intrinsic-CAR (besag), SAR, SPDE/Matern and seasonal models; anything else is
+added with [ngvb_custom()]. [ngvb_sample()] and
 [bayes.factor()] integrate the mixing variables out for a marginal-likelihood
 comparison against the Gaussian model.</p>
     </div>
