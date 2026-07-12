@@ -8,19 +8,41 @@
 [![JRSS-B 2025](https://img.shields.io/badge/JRSS--B%202025-Model%20checking-b31b1b.svg)](https://doi.org/10.1093/jrsssb/qkae107)
 <!-- badges: end -->
 
-**ngvb** (non-Gaussian variational Bayes) takes an ordinary R-INLA latent *Gaussian* model (LGM), **checks** whether the latent Gaussian
-assumption is adequate, and **extends** it to a latent *non-Gaussian* model (LnGM), each in one line.
+Statistical models routinely assume Gaussianity for latent processes (to
+smooth a signal in space or time, say)  largely because it's convenient, not because it's
+actually appropriate. It's required by many packages such as R-INLA. 
+That assumption is typically left unchecked: is the
+latent Gaussian assumption reasonable? Is it supported by the data? Which conclusions would
+change if it were relaxed? And can a more flexible non-Gaussian model even be fit easily?
+
+**ngvb** (non-Gaussian variational Bayes) answers these questions for R-INLA. It takes an
+ordinary R-INLA latent *Gaussian* model (LGM), **checks** whether the latent Gaussian
+assumption is adequate, and **extends** it to a latent *non-Gaussian* model (LnGM), each in
+one line.
+
+Its diagnostics tell you exactly which predictions and covariates of interest are sensitive
+to the Gaussian assumption. Beyond diagnosis, `ngvb` lets you fit the more general
+non-Gaussian model directly, which often predicts better.
+
+![Pressure measurements, LGM predictions, and sensitivity of those predictions](man/figures/spde-example.jpg)
+Pressure measurements (a), the LGM's spatial predictions (b), and the
+sensitivity of those predictions to relaxing Gaussianity (c). In (c) we see that the Gaussian assumptions oversmooths some local spikes
+(red indicates regions where the LnGM model predicts higher pressure).
+
+## Usage 
 
 ```r
 LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = TRUE))
 
-ng.check(LGM)       # is the latent Gaussian assumption adequate, and where not?
+ng.check(LGM)       # is the latent Gaussian assumption adequate? which posterior summaries are most sensitive? 
 LnGM <- ngvb(LGM)   # fit the non-Gaussian extension
 
 samples <- ngvb_sample(LnGM, n.samples = 30) # sample non-gaussian V from the variational posterior + fit R-INLA models
 bayes.factor(samples)               # how much better the LnGM is, with V integrated out?
 summary(samples)                    # summary of random effects + fixed effects + hyperparameters of the LnGM
 ```
+
+
 
 ## Installation
 
