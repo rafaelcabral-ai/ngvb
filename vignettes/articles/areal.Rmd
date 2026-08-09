@@ -1,0 +1,69 @@
+---
+title: "Areal data: an intrinsic model (besag)"
+description: >
+  An intrinsic conditional autoregression for burglary rates across Columbus, Ohio, and what
+  the diagnostic says when a field really is Gaussian.
+output: rmarkdown::html_document
+---
+
+```{r setup, include = FALSE}
+source("_common.R")
+```
+
+```{r lib}
+library(ngvb)
+library(INLA)
+```
+
+Residential burglary rates in 49 counties of Columbus, Ohio, come with the `spData` package.
+Plot the response on the map first:
+
+```{r besag-data, fig.alt = "Choropleth map of residential burglary rates across the 49 Columbus counties.", eval = have_areal, fig.height = 4.2, fig.width = 5.5}
+library(sf); library(spdep)
+map  <- st_read(system.file("shapes/columbus.gpkg", package = "spData"), quiet = TRUE)
+areal.plot(map, map$CRIME, title = "crime")
+```
+
+An intrinsic conditional autoregression (the `besag` model) assumes neighbouring counties
+are similar, with Gaussian differences across the edges of the adjacency graph,
+$$x_i - x_j \sim N(0,\,1/\tau)\quad\text{for each edge }(i,j).$$
+The non-Gaussian version allows a few sharp boundaries between otherwise smooth regions.
+Build the adjacency and fit the Gaussian model:
+
+```{r besag-inla, eval = have_areal}
+d    <- st_drop_geometry(map[, c("CRIME", "HOVAL", "INC")])
+d$s  <- seq_len(nrow(d))
+nb   <- poly2nb(map)
+Wadj <- Matrix::sparseMatrix(i = rep(seq_along(nb), lengths(nb)), j = unlist(nb), x = 1)
+
+LGM <- inla(CRIME ~ 1 + HOVAL + INC +
+              f(s, model = "besag", graph = Wadj, scale.model = TRUE,
+                hyper = list(prec = list(prior = "loggamma", param = c(0.5, 0.01)))),
+            data = d, control.compute = list(config = TRUE))
+```
+
+```{r besag-hyper, eval = have_areal}
+LGM$summary.hyperpar
+```
+
+```{r besag-check, fig.alt = "Diagnostic for the intrinsic CAR: similar small sensitivities across all graph edges, with the observed total well inside its Gaussian reference.", eval = have_areal, fig.height = 3.4}
+ng.check(LGM, compute.fixed = FALSE)   # areal model auto-detected
+```
+
+The 118 edges of this graph all show a similarly small discrepancy from the Gaussian
+reference. This field is essentially Gaussian, and both the previous checking procedure (`ng.check`) and the latent non-Gaussian fitting (`ngvb`) show that.
+
+```{r besag-fit, fig.alt = "ngvb fit summary for the besag component: edge mixing weights near one and the non-Gaussianity parameter shrinking toward zero.", eval = have_areal, fig.height = 4}
+LnGM <- ngvb(LGM)
+plot(LnGM)
+```
+
+
+```{r besag-bf, eval = have_areal}
+bayes.factor(LnGM, n.samples = 30, seed = 1)
+```
+
+The intrinsic besag effect puts its mixing variables on the *edges* of the graph rather than
+on the counties, so they cannot be mapped directly. The simultaneous autoregression, built by
+hand in [Custom models](custom-models.html), places them on the counties instead and can be
+mapped.

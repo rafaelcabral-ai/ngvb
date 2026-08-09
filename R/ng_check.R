@@ -62,16 +62,16 @@ ng_sens_fixed <- function(b, gii, s12, u1, h) {
 #'   `selection`) if `compute.random = TRUE`.
 #' @seealso [ngvb()]
 #' @examples
-#' \donttest{
-#' if (requireNamespace("INLA", quietly = TRUE)) {
-#'   set.seed(1); n <- 100
-#'   x <- cumsum(rnorm(n, sd = 0.3)); x[50:n] <- x[50:n] + 6
-#'   y <- x + rnorm(n, sd = 0.4)
-#'   LGM <- INLA::inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
-#'                     data = data.frame(y = y, i = 1:n),
-#'                     control.compute = list(config = TRUE))
-#'   ng.check(LGM)      # small p-value flags departure from latent Gaussianity
-#' }
+#' # Requires INLA, which is not on CRAN; see the package website for the
+#' # rendered output of this and other examples.
+#' \dontrun{
+#' set.seed(1); n <- 100
+#' x <- cumsum(rnorm(n, sd = 0.3)); x[50:n] <- x[50:n] + 6
+#' y <- x + rnorm(n, sd = 0.4)
+#' LGM <- INLA::inla(y ~ -1 + f(i, model = "rw1", constr = TRUE),
+#'                   data = data.frame(y = y, i = 1:n),
+#'                   control.compute = list(config = TRUE))
+#' ng.check(LGM)      # small p-value flags departure from latent Gaussianity
 #' }
 #' @export
 ng.check <- function(fit, selection = NULL, components = NULL, compute.fixed = TRUE,

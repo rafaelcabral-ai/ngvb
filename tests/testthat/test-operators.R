@@ -48,7 +48,7 @@ test_that("h is 1 for discrete models and diag(C) for SPDE", {
   expect_true(all(ngvb_operator("ar1", n = 8)$h == 1))
   expect_true(all(ngvb_operator("rw1", n = 8)$h == 1))
   skip_if_not_installed("fmesher")
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.3, 0.6), cutoff = 0.1)
   spde <- INLA::inla.spde2.pcmatern(mesh, prior.range = c(0.3, 0.5),
@@ -63,7 +63,7 @@ test_that("h is 1 for discrete models and diag(C) for SPDE", {
 
 test_that("SPDE operator matches inla.spde2.precision and reproduces its PC prior", {
   skip_if_not_installed("fmesher")
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(1); loc <- matrix(runif(60), 30, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = 0.3, cutoff = 0.05)
   spde <- INLA::inla.spde2.pcmatern(mesh, alpha = 2,
@@ -89,7 +89,7 @@ test_that("SPDE operator matches inla.spde2.precision and reproduces its PC prio
 
 test_that("SPDE operator rejects a non-PC (plain matern) object", {
   skip_if_not_installed("fmesher")
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = 0.4, cutoff = 0.1)
   expect_error(ngvb_operator("spde", spde = INLA::inla.spde2.matern(mesh)),

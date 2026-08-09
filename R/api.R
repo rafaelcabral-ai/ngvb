@@ -229,14 +229,14 @@ ngvb_check_degeneracy <- function(V, h, comp.names, alpha.eta, verbose,
 #'   vectors `V`, the non-Gaussianity parameters `eta`, and their trajectory.
 #' @seealso [ng.check()], [ngvb_operator()]
 #' @examples
-#' \donttest{
-#' if (requireNamespace("INLA", quietly = TRUE)) {
-#'   data(jumpts)   # a series with two abrupt jumps -- see the package vignette
-#'   LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
-#'                      control.compute = list(config = TRUE))
-#'   LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
-#'   summary(LnGM)
-#' }
+#' # Requires INLA, which is not on CRAN; see the package website for the
+#' # rendered output of this and other examples.
+#' \dontrun{
+#' data(jumpts)   # a series with two abrupt jumps
+#' LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
+#'                    control.compute = list(config = TRUE))
+#' LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
+#' summary(LnGM)
 #' }
 #' @export
 ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SCVI"),

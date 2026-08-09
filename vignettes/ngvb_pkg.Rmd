@@ -1,0 +1,60 @@
+---
+title: "ngvb: latent non-Gaussian models with R-INLA"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ngvb: latent non-Gaussian models with R-INLA}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+`ngvb` takes an ordinary R-INLA latent *Gaussian* model (LGM), checks whether the latent
+Gaussian assumption is adequate, and extends it to a latent *non-Gaussian* model (LnGM),
+each in one line:
+
+```r
+LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = TRUE))
+
+ng.check(LGM)       # is the latent Gaussian assumption adequate, and where not?
+LnGM <- ngvb(LGM)   # fit the non-Gaussian extension
+```
+
+Every worked example in the documentation needs [INLA](https://www.r-inla.org/), which is
+not distributed on CRAN. The vignettes are therefore hosted on the package website rather
+than shipped with the package, so that they always build against a working INLA
+installation. They are listed below.
+
+## Vignettes
+
+* [Get started with ngvb](https://rafaelcabral-ai.github.io/ngvb/articles/ngvb.html) —
+  what a latent non-Gaussian model is, which INLA components are supported, and a first
+  end-to-end example on a time series with two jumps.
+* [Geostatistical data: a Matern (SPDE) field](https://rafaelcabral-ai.github.io/ngvb/articles/geostatistical.html) —
+  a Matern field fitted to pressure readings, with a map of where the spatial predictions
+  will move before the non-Gaussian model is ever fitted.
+* [Areal data: an intrinsic model (besag)](https://rafaelcabral-ai.github.io/ngvb/articles/areal.html) —
+  an intrinsic conditional autoregression for burglary rates across Columbus, Ohio.
+* [Random intercepts and slopes](https://rafaelcabral-ai.github.io/ngvb/articles/longitudinal.html) —
+  subject-level random effects in a longitudinal growth study.
+* [Custom models: your own precision matrix](https://rafaelcabral-ai.github.io/ngvb/articles/custom-models.html) —
+  building a simultaneous autoregression by hand with `ngvb_custom()`, and borrowing
+  ready-made operators from the `ngme2` package.
+
+The full function reference is at
+<https://rafaelcabral-ai.github.io/ngvb/reference/index.html>.
+
+## Installing INLA
+
+```r
+install.packages("INLA",
+  repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/stable"),
+  dep = TRUE)
+```
+
+## References
+
+* Cabral, R., Bolin, D. and Rue, H. (2024). *Fitting latent non-Gaussian models using
+  variational Bayes and Laplace approximations.* Journal of the American Statistical
+  Association 119(548):2983–2995. <https://doi.org/10.1080/01621459.2023.2296704>
+* Cabral, R., Bolin, D. and Rue, H. (2025). *Robustness, model checking, and hierarchical
+  models.* Journal of the Royal Statistical Society Series B 87(3):632–652.
+  <https://doi.org/10.1093/jrsssb/qkae107>

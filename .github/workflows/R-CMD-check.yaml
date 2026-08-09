@@ -32,6 +32,9 @@ jobs:
       R_KEEP_PKG_SOURCE: yes
       # Missing Suggests (e.g. ngme2) must not fail the check.
       _R_CHECK_FORCE_SUGGESTS_: false
+      # The INLA tests are gated behind skip_on_cran(); this is what makes them
+      # actually run here, on the runners where we do install INLA.
+      NOT_CRAN: true
 
     steps:
       - uses: actions/checkout@v4

@@ -12,3 +12,6 @@
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
 ^\.Rhistory$
+# The worked examples all need INLA, which is not on CRAN. They are built only
+# by pkgdown (see vignettes/articles/) and linked from vignettes/ngvb_pkg.Rmd.
+^vignettes/articles$

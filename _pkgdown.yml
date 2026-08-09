@@ -17,12 +17,48 @@ home:
 
 navbar:
   structure:
-    left:  [intro, reference]
+    left:  [intro, articles, reference]
     right: [search, github]
   components:
     reference:
       text: Functions
       href: reference/index.html
+    articles:
+      text: Vignettes
+      menu:
+        - text: Get started with ngvb
+          href: articles/ngvb.html
+        - text: -------
+        - text: Worked examples
+        - text: Geostatistical data (SPDE)
+          href: articles/geostatistical.html
+        - text: Areal data (besag)
+          href: articles/areal.html
+        - text: Random intercepts and slopes
+          href: articles/longitudinal.html
+        - text: Custom models and ngme2 operators
+          href: articles/custom-models.html
+
+articles:
+  - title: Getting started
+    contents:
+      - articles/ngvb
+
+  - title: Worked examples
+    desc: >
+      One data type per article. Each is self-contained and runs against a real INLA
+      installation.
+    contents:
+      - articles/geostatistical
+      - articles/areal
+      - articles/longitudinal
+      - articles/custom-models
+
+  # The CRAN-shipped stub is just a table of contents pointing back at this site,
+  # so it is built but kept off the index page.
+  - title: internal
+    contents:
+      - ngvb_pkg
 
 reference:
   - title: Diagnose and fit

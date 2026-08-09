@@ -23,7 +23,7 @@ test_that("prior-family dispatch maps pc.prec/loggamma/normal and rejects the re
 })
 
 test_that("hyper specs are read from fit$all.hyper, including INLA defaults", {
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(2); n <- 20
   d <- data.frame(y = rnorm(n), i = 1:n, j = 1:n)
   fit <- INLA::inla(y ~ -1 +
@@ -95,7 +95,7 @@ test_that("a NULL hyper record warns loudly instead of silently keeping the defa
 })
 
 test_that("ngvb() carries a loggamma f() prior into the fit and changes it", {
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(1); n <- 25; g <- rnorm(n); g[7] <- 6; y <- g + rnorm(n, sd = 0.3)
   d <- data.frame(y = y, i = 1:n)
   L0 <- INLA::inla(y ~ -1 + f(i, model = "iid"), data = d,
@@ -112,7 +112,7 @@ test_that("ngvb() carries a loggamma f() prior into the fit and changes it", {
 test_that("REGRESSION: the prior is carried even when ngvb() runs inside a function", {
   ## The old formula-reparsing extraction silently fell back to the default
   ## prior in exactly this scenario; all.hyper has no such failure mode.
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(3); n <- 25
   d <- data.frame(y = rnorm(n), i = 1:n)
   run <- function(shape, rate) {

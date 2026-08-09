@@ -12,7 +12,7 @@ test_that(".rgig_vec draws each index from its own GIG (guards the vector-chi bu
 })
 
 test_that("seasonal operator matches INLA's seasonal structure (short period)", {
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   n <- 12; s <- 4
   op <- ngvb_operator("seasonal", n = n, season = s)
   Qours <- as.matrix(Matrix::crossprod(op$Dfunc(0)))
@@ -27,7 +27,7 @@ test_that("seasonal operator matches INLA's seasonal structure (short period)", 
 })
 
 test_that("seasonal component is auto-detected end to end", {
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   n <- 36; set.seed(1)
   y <- as.numeric(arima.sim(list(ar = 0.3), n)) + rep(sin(2 * pi * (1:12) / 12), length.out = n)
   LGM <- INLA::inla(y ~ -1 + f(t, model = "seasonal", season.length = 12),
@@ -38,7 +38,7 @@ test_that("seasonal component is auto-detected end to end", {
 })
 
 test_that("bayes.factor returns a well-formed estimate and favours the right model", {
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   ## clear non-Gaussian iid signal: most effects ~ N(0,1), one strong outlier
   set.seed(1); ng <- 40; g <- rnorm(ng); g[10] <- 8
   y <- g + rnorm(ng, sd = 0.3)

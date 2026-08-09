@@ -14,8 +14,9 @@ Description: Diagnoses whether the latent Gaussian assumption of a model fitted
     Q(theta, V) = D(theta)^T diag(1/V) D(theta) and owns its normalizing
     constant, and a model registry covers iid, random-walk, autoregressive,
     Ornstein-Uhlenbeck, intrinsic-CAR (besag), simultaneous-autoregression,
-    'SPDE'/Matern and seasonal models. Methods follow
-    Cabral, Bolin and Rue (2022) on latent non-Gaussian models.
+    'SPDE'/Matern and seasonal models. Methods follow Cabral, Bolin and Rue
+    (2024) <doi:10.1080/01621459.2023.2296704> and Cabral, Bolin and Rue (2025)
+    <doi:10.1093/jrsssb/qkae107>.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true

@@ -1,10 +1,5 @@
 ## End-to-end checks that require INLA. Slower; skipped on CRAN.
 
-skip_if_no_inla <- function() {
-  skip_on_cran()
-  if (!requireNamespace("INLA", quietly = TRUE)) skip("INLA not available")
-}
-
 test_that("engine reproduces native ar1 at V = h (Gaussian limit)", {
   skip_if_no_inla()
   set.seed(7); N <- 200

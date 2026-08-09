@@ -5,7 +5,7 @@
 *.Rproj
 /doc/
 /Meta/
-..Rcheck/
+*.Rcheck/
 *.tar.gz
 inst/doc
 Rplots.pdf

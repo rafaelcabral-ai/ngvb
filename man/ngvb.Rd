@@ -80,14 +80,14 @@ Fit a latent non-Gaussian model from a fitted INLA (LGM) object.
 }
 
 \examples{
-\donttest{
-if (requireNamespace("INLA", quietly = TRUE)) {
-  data(jumpts)   # a series with two abrupt jumps -- see the package vignette
-  LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
-                     control.compute = list(config = TRUE))
-  LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
-  summary(LnGM)
-}
+# Requires INLA, which is not on CRAN; see the package website for the
+# rendered output of this and other examples.
+\dontrun{
+data(jumpts)   # a series with two abrupt jumps
+LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
+                   control.compute = list(config = TRUE))
+LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
+summary(LnGM)
 }
 }
 \seealso{

@@ -1,8 +1,7 @@
 ## ngvb_sample() / bayes.factor() / summary.ngvb.samples()
 
 test_that("summary.ngvb.samples: 'all' shows both tables, skipping absent ones", {
-  skip_if_not_installed("INLA")
-  skip_on_cran()
+  skip_if_no_inla()
   set.seed(1); n <- 25
   d <- data.frame(y = rnorm(n), i = 1:n)
 
@@ -29,8 +28,7 @@ test_that("summary.ngvb.samples: 'all' shows both tables, skipping absent ones",
 })
 
 test_that("summary.ngvb.samples: 'all' shows real fixed-effect estimates when present", {
-  skip_if_not_installed("INLA")
-  skip_on_cran()
+  skip_if_no_inla()
   set.seed(2); n <- 30
   x <- rnorm(n)
   d <- data.frame(y = 2 + 0.5 * x + rnorm(n), x = x, i = 1:n)
@@ -52,8 +50,7 @@ test_that("summary.ngvb.samples: the 'what' choices are discoverable via args()"
 })
 
 test_that("summary.ngvb.samples: 'random' pools the latent field, matches 'all'", {
-  skip_if_not_installed("INLA")
-  skip_on_cran()
+  skip_if_no_inla()
   set.seed(1); n <- 25
   d <- data.frame(y = rnorm(n), i = 1:n)
 

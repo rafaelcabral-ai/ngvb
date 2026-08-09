@@ -47,7 +47,7 @@ test_that("ngvb_find_f_model extracts the model expression from a formula", {
 
 test_that("SPDE operator uses lumped mass for h and factors the Matern precision", {
   skip_if_not_installed("fmesher")
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.3, 0.6), cutoff = 0.1)
   spde <- INLA::inla.spde2.pcmatern(mesh, prior.range = c(0.5, 0.5),

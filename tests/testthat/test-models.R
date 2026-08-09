@@ -2,7 +2,7 @@
 
 test_that("SPDE (range, sigma) map to tau^2(kappa^4 M0 + 2 kappa^2 M1 + M2)", {
   skip_if_not_installed("fmesher")
-  skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(1); loc <- matrix(runif(40), 20, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.3, 0.6), cutoff = 0.1)
   spde <- INLA::inla.spde2.pcmatern(mesh, alpha = 2,
@@ -30,7 +30,7 @@ test_that("intrinsic CAR builds an edge-incidence operator (rank deficiency 1)",
 })
 
 test_that("SVI method also recovers planted outliers", {
-  skip_on_cran(); skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(42); N <- 100
   innov <- rnorm(N, sd = 0.7); innov[c(30, 70)] <- c(7, -7)
   x <- numeric(N); x[1] <- innov[1]; for (i in 2:N) x[i] <- 0.5 * x[i-1] + innov[i]
@@ -42,7 +42,7 @@ test_that("SVI method also recovers planted outliers", {
 })
 
 test_that("ngvb and ng.check run on a stack-based SPDE fit (APredictor indexing)", {
-  skip_on_cran(); skip_if_not_installed("INLA"); skip_if_not_installed("fmesher")
+  skip_if_no_inla(); skip_if_not_installed("fmesher")
   set.seed(1); n <- 60; loc <- matrix(runif(n * 2), n, 2)
   mesh <- fmesher::fm_mesh_2d(loc, max.edge = c(0.25, 0.5), cutoff = 0.08)
   spde <- INLA::inla.spde2.pcmatern(mesh, prior.range = c(0.3, 0.5),
@@ -61,7 +61,7 @@ test_that("ngvb and ng.check run on a stack-based SPDE fit (APredictor indexing)
 })
 
 test_that("ng.check returns a fixed-effect sensitivity matrix without error", {
-  skip_on_cran(); skip_if_not_installed("INLA")
+  skip_if_no_inla()
   set.seed(1); ng <- 25; nrep <- 5; gi <- rep(1:ng, each = nrep)
   b0 <- rnorm(ng); b0[c(5, 20)] <- c(5, -5); tt <- rnorm(ng * nrep)
   yy <- 2 + b0[gi] + 0.5 * tt + rnorm(ng * nrep, sd = 0.3)
