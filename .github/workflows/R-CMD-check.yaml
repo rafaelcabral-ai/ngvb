@@ -67,11 +67,20 @@ jobs:
           inla_repo <- "https://inla.r-inla-download.org/R/stable"
           backoff   <- c(30, 60, 120, 240, 480)
 
+          # Surface the server's own explanation instead of swallowing it: a
+          # muffled warning here is exactly what made the last failure opaque.
           index_ok <- function() {
             unlink(list.files(tempdir(), "^repos_.*[.]rds$", full.names = TRUE))
-            tryCatch(nrow(available.packages(repos = inla_repo,
-                                             ignore_repo_cache = TRUE)) > 0,
-                     warning = function(w) FALSE, error = function(e) FALSE)
+            withCallingHandlers(
+              tryCatch(nrow(available.packages(repos = inla_repo,
+                                               ignore_repo_cache = TRUE)) > 0,
+                       error = function(e) {
+                         message("  error: ", conditionMessage(e)); FALSE
+                       }),
+              warning = function(w) {
+                message("  warning: ", conditionMessage(w))
+                invokeRestart("muffleWarning")
+              })
           }
 
           for (attempt in seq_len(length(backoff) + 1L)) {

@@ -38,6 +38,30 @@ jobs:
             INLA=?ignore-before-r=100.0.0
           needs: website
 
+      # Diagnostic only; never fails the job. The INLA download server has
+      # twice served an HTML page in place of its package index to this runner
+      # while serving the real index fine from a developer machine. Record what
+      # the runner actually receives so the cause is evidence rather than guess.
+      - name: Probe INLA repository
+        continue-on-error: true
+        run: |
+          url=https://inla.r-inla-download.org/R/stable/src/contrib/PACKAGES
+          echo "----- runner egress IP -----"
+          curl -s --max-time 20 https://api.ipify.org || true; echo
+          echo "----- host root reachable? -----"
+          curl -sS -o /dev/null -w 'http=%{http_code} ip=%{remote_ip}\n' \
+            --max-time 30 https://inla.r-inla-download.org/ || true
+          echo "----- index response headers -----"
+          curl -sSI --max-time 30 "$url" || true
+          echo "----- index body, first 300 bytes -----"
+          curl -sS --max-time 30 "$url" | head -c 300 || true; echo
+          echo "----- what R makes of it -----"
+          Rscript -e 'withCallingHandlers(
+            print(utils::head(utils::available.packages(
+              repos = "https://inla.r-inla-download.org/R/stable",
+              ignore_repo_cache = TRUE)[, c("Package", "Version"), drop = FALSE])),
+            warning = function(w) message("R warning: ", conditionMessage(w)))' || true
+
       - name: Install INLA
         run: |
           # The INLA download server goes down for stretches at a time. On
@@ -48,11 +72,20 @@ jobs:
           inla_repo <- "https://inla.r-inla-download.org/R/stable"
           backoff   <- c(30, 60, 120, 240, 480)
 
+          # Surface the server's own explanation instead of swallowing it: a
+          # muffled warning here is exactly what made the last failure opaque.
           index_ok <- function() {
             unlink(list.files(tempdir(), "^repos_.*[.]rds$", full.names = TRUE))
-            tryCatch(nrow(available.packages(repos = inla_repo,
-                                             ignore_repo_cache = TRUE)) > 0,
-                     warning = function(w) FALSE, error = function(e) FALSE)
+            withCallingHandlers(
+              tryCatch(nrow(available.packages(repos = inla_repo,
+                                               ignore_repo_cache = TRUE)) > 0,
+                       error = function(e) {
+                         message("  error: ", conditionMessage(e)); FALSE
+                       }),
+              warning = function(w) {
+                message("  warning: ", conditionMessage(w))
+                invokeRestart("muffleWarning")
+              })
           }
 
           for (attempt in seq_len(length(backoff) + 1L)) {
