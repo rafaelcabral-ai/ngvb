@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Latent non-Gaussian models with R-INLA and variational Bayes • ngvb</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/Inter-0.4.10/font.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/Inter-0.4.10/font.css" rel="stylesheet">
 <link href="deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -36,6 +36,18 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/ngvb.html">Get started</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
+<li><a class="dropdown-item" href="articles/ngvb.html">Get started with ngvb</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked examples</h6></li>
+    <li><a class="dropdown-item" href="articles/geostatistical.html">Geostatistical data (SPDE)</a></li>
+    <li><a class="dropdown-item" href="articles/areal.html">Areal data (besag)</a></li>
+    <li><a class="dropdown-item" href="articles/longitudinal.html">Random intercepts and slopes</a></li>
+    <li><a class="dropdown-item" href="articles/custom-models.html">Custom models and ngme2 operators</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Functions</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -55,16 +67,23 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><strong>ngvb</strong> (non-Gaussian variational Bayes) takes an ordinary R-INLA latent <em>Gaussian</em> model (LGM), <strong>checks</strong> whether the latent Gaussian assumption is adequate, and <strong>extends</strong> it to a latent <em>non-Gaussian</em> model (LnGM), each in one line.</p>
+<p>Statistical models routinely assume Gaussianity for latent processes (to smooth a signal in space or time, say) largely because it’s convenient, not because it’s actually appropriate. It’s required by many packages such as R-INLA. That assumption is typically left unchecked: is the latent Gaussian assumption reasonable? Is it supported by the data? Which conclusions would change if it were relaxed? And can a more flexible non-Gaussian model even be fit easily?</p>
+<p><strong>ngvb</strong> (non-Gaussian variational Bayes) answers these questions for R-INLA. It takes an ordinary R-INLA latent <em>Gaussian</em> model (LGM), <strong>checks</strong> whether the latent Gaussian assumption is adequate, and <strong>extends</strong> it to a latent <em>non-Gaussian</em> model (LnGM), each in one line.</p>
+<p>Its diagnostics tell you exactly which predictions and covariates of interest are sensitive to the Gaussian assumption. Beyond diagnosis, <code>ngvb</code> lets you fit the more general non-Gaussian model directly, which often predicts better.</p>
+<p><img src="reference/figures/spde-example.jpg" alt="Pressure measurements, LGM predictions, and sensitivity of those predictions"> Pressure measurements (a), the LGM’s spatial predictions (b), and the sensitivity of those predictions to relaxing Gaussianity (c). In (c) we see that the Gaussian assumptions oversmooths some local spikes (red indicates regions where the LnGM model predicts higher pressure).</p>
+<div class="section level2">
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LGM</span> <span class="op">&lt;-</span> <span class="fu">inla</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">f</span><span class="op">(</span><span class="va">s</span>, model <span class="op">=</span> <span class="st">"rw1"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span>, control.compute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>config <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span>       <span class="co"># is the latent Gaussian assumption adequate, and where not?</span></span>
+<span><span class="fu"><a href="reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span>       <span class="co"># is the latent Gaussian assumption adequate? which posterior summaries are most sensitive? </span></span>
 <span><span class="va">LnGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ngvb.html">ngvb</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span>   <span class="co"># fit the non-Gaussian extension</span></span>
 <span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ngvb_sample.html">ngvb_sample</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span><span class="op">)</span> <span class="co"># sample non-gaussian V from the variational posterior + fit R-INLA models</span></span>
 <span><span class="fu"><a href="reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span>               <span class="co"># how much better the LnGM is, with V integrated out?</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span>                    <span class="co"># summary of random effects + fixed effects + hyperparameters of the LnGM</span></span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -75,12 +94,14 @@
 <span>  dep <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"rafaelcabral-ai/ngvb"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"rafaelcabral-ai/ngvb"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-idea">The idea<a class="anchor" aria-label="anchor" href="#the-idea"></a>
 </h2>
-<p>A latent Gaussian field has precision <code>Q = Dᵀ D</code> for a model-specific <em>dependency matrix</em> <code>D</code> (the difference operator for a random walk, <code>I − ρW</code> for a SAR, <code>κ²C + G</code> for a Matérn/SPDE, and so on). The non-Gaussian extension replaces the Gaussian driving noise, which is equivalent to conditioning on <strong>mixing variables</strong> <code>V</code>:</p>
+<p>Every latent Gaussian field is built from a model-specific <em>dependency matrix</em> <code>D</code> that turns the field <code>x</code> into independent Gaussian increments, <code>D x =ᵈ Λ</code> with <code>Λᵢ ~ N(0, hᵢ)</code> for a known weight vector <code>h</code>. Its precision is therefore</p>
+<pre><code>Q = Dᵀ diag(1/h) D</code></pre>
+<p>(<code>D</code> is the difference operator for a random walk, <code>I − ρW</code> for a SAR, <code>κ²C + G</code> for a Matérn/SPDE, and so on; <code>h</code> is a vector of ones for a random walk and the mesh mass for an SPDE.) The non-Gaussian extension keeps <code>D</code> and replaces the Gaussian driving noise, giving each increment its own variance <code>Vᵢ</code> with <code>E[Vᵢ] = hᵢ</code>, which is equivalent to conditioning on <strong>mixing variables</strong> <code>V</code>:</p>
 <pre><code>Q(θ, V) = D(θ)ᵀ diag(1/V) D(θ)</code></pre>
 <p>Where <code>Vᵢ = hᵢ</code> the model is Gaussian; where <code>Vᵢ</code> is inflated the increment is allowed to be unusually large. A single non-Gaussianity parameter <code>η ≥ 0</code> controls how far <code>V</code> may stray, and its exponential prior shrinks back to the Gaussian model unless the data pull away. <code>ngvb</code> fits this with a variational-Bayes loop that alternates an INLA fit (for fixed <code>V</code>) with closed-form updates of <code>V</code> and <code>η</code>.</p>
 </div>
@@ -152,7 +173,14 @@
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
-<p>See the <a href="https://rafaelcabral-ai.github.io/ngvb/articles/ngvb.html">Get started</a> article for worked examples across time series, areal, geostatistical and custom models, and the <a href="https://rafaelcabral-ai.github.io/ngvb/reference/index.html">reference</a> for the full API.</p>
+<p>Start with <a href="https://rafaelcabral-ai.github.io/ngvb/articles/ngvb.html">Get started</a>, which covers the model and walks through a time series with jumps. Then pick the article that matches your data:</p>
+<ul>
+<li><a href="https://rafaelcabral-ai.github.io/ngvb/articles/geostatistical.html">Geostatistical data (SPDE)</a></li>
+<li><a href="https://rafaelcabral-ai.github.io/ngvb/articles/areal.html">Areal data (besag)</a></li>
+<li><a href="https://rafaelcabral-ai.github.io/ngvb/articles/longitudinal.html">Random intercepts and slopes</a></li>
+<li><a href="https://rafaelcabral-ai.github.io/ngvb/articles/custom-models.html">Custom models and ngme2 operators</a></li>
+</ul>
+<p>The <a href="https://rafaelcabral-ai.github.io/ngvb/reference/index.html">reference</a> has the full API.</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -213,7 +241,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

@@ -1,10 +1,14 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/404.html</loc></url>
+<url><loc>https://rafaelcabral-ai.github.io/ngvb/articles/areal.html</loc></url>
+<url><loc>https://rafaelcabral-ai.github.io/ngvb/articles/custom-models.html</loc></url>
+<url><loc>https://rafaelcabral-ai.github.io/ngvb/articles/geostatistical.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/articles/index.html</loc></url>
+<url><loc>https://rafaelcabral-ai.github.io/ngvb/articles/longitudinal.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/articles/ngvb.html</loc></url>
+<url><loc>https://rafaelcabral-ai.github.io/ngvb/articles/ngvb_pkg.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/authors.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/index.html</loc></url>
-<url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/Orthodont.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/areal.plot.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/bayes.factor.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/density.ngvb.html</loc></url>
@@ -13,7 +17,6 @@
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/index.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/jumpts.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ng.check.html</loc></url>
-<url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ng_sens_fixed.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ngvb-package.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ngvb.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ngvb.rgeneric.engine.html</loc></url>
@@ -32,6 +35,8 @@
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_swap_formula.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_theme.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_vb.html</loc></url>
+<url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/ng_sens_fixed.html</loc></url>
+<url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/Orthodont.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/plot.ngvb.check.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/plot.ngvb.html</loc></url>
 <url><loc>https://rafaelcabral-ai.github.io/ngvb/reference/summary.ngvb.html</loc></url>

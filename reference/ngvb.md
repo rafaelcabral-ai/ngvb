@@ -107,24 +107,13 @@ alpha = )\` (the PC prior sets P(sigma \> U) = alpha, with sigma =
 ## Examples
 
 ``` r
-# \donttest{
-if (requireNamespace("INLA", quietly = TRUE)) {
-  data(jumpts)   # a series with two abrupt jumps -- see the package vignette
-  LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
-                     control.compute = list(config = TRUE))
-  LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
-  summary(LnGM)
-}
-#> Components: x [rw1] 
-#> ngvb: carried the loggamma precision prior from the INLA fit into component 'x'.
-#> ngvb: reached the iteration limit after 10 iteration(s);  E[eta] = 2.442
-#> Latent non-Gaussian model (ngvb)
-#> 
-#> Fixed effects:
-#> data frame with 0 columns and 0 rows
-#> 
-#> Non-Gaussianity -- eta: mean (median) [90% CI]:
-#>   x            [rw1]: eta = 2.442 (2.408) [1.966, 3.035];
-#>                  most non-Gaussian indices (E[V]/h): 40 (10.6), 20 (6.9), 16 (1.2), 14 (1.2), 90 (1.1)
-# }
+# Requires INLA, which is not on CRAN; see the package website for the
+# rendered output of this and other examples.
+if (FALSE) { # \dontrun{
+data(jumpts)   # a series with two abrupt jumps
+LGM  <- INLA::inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
+                   control.compute = list(config = TRUE))
+LnGM <- ngvb(LGM, iter = 10)     # non-Gaussian extension, model auto-detected
+summary(LnGM)
+} # }
 ```
