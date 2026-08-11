@@ -60,21 +60,44 @@ jobs:
       - name: Install INLA
         if: matrix.config.inla
         run: |
-          # The INLA download server is occasionally unreachable for a few
-          # minutes; retry a few times before giving up.
-          for (attempt in 1:3) {
-            ok <- tryCatch({
-              install.packages("INLA",
-                repos = c(getOption("repos"),
-                          INLA = "https://inla.r-inla-download.org/R/stable"),
-                dependencies = TRUE)
-              requireNamespace("INLA", quietly = TRUE)
-            }, error = function(e) FALSE)
-            if (isTRUE(ok)) break
-            message("INLA install attempt ", attempt, " failed, retrying...")
-            Sys.sleep(60)
+          # The INLA download server goes down for stretches at a time; when it
+          # does it serves an HTML error page in place of the package index,
+          # which surfaces as a misleading "INLA is not available for this
+          # version of R". Back off for ~15 minutes and name the failure mode.
+          inla_repo <- "https://inla.r-inla-download.org/R/stable"
+          backoff   <- c(30, 60, 120, 240, 480)
+
+          index_ok <- function() {
+            unlink(list.files(tempdir(), "^repos_.*[.]rds$", full.names = TRUE))
+            tryCatch(nrow(available.packages(repos = inla_repo,
+                                             ignore_repo_cache = TRUE)) > 0,
+                     warning = function(w) FALSE, error = function(e) FALSE)
           }
-          stopifnot(requireNamespace("INLA", quietly = TRUE))
+
+          for (attempt in seq_len(length(backoff) + 1L)) {
+            if (index_ok()) {
+              ok <- tryCatch({
+                install.packages("INLA",
+                  repos = c(getOption("repos"), INLA = inla_repo),
+                  dependencies = TRUE)
+                requireNamespace("INLA", quietly = TRUE)
+              }, error = function(e) FALSE)
+              if (isTRUE(ok)) break
+              message("attempt ", attempt, ": index readable but install failed")
+            } else {
+              message("attempt ", attempt,
+                      ": INLA repository index unreadable (server likely down)")
+            }
+            if (attempt > length(backoff)) break
+            message("  retrying in ", backoff[attempt], "s")
+            Sys.sleep(backoff[attempt])
+          }
+
+          if (!requireNamespace("INLA", quietly = TRUE))
+            stop("Could not install INLA from ", inla_repo, " after ",
+                 length(backoff) + 1L, " attempts over ~15 minutes. This is an ",
+                 "INLA download-server problem, not an ngvb problem; re-run ",
+                 "this workflow later.")
         shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
