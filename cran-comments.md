@@ -28,5 +28,8 @@
 ## Test environments
 
 * local Windows 11, R 4.4.2
+* local Windows 11, R 4.4.2 with INLA deliberately removed: 0 errors,
+  0 warnings. Examples, tests, and vignette all pass; the 21
+  INLA-dependent tests skip via skip_on_cran().
 * GitHub Actions: ubuntu-latest (release, devel), macOS-latest (release),
   windows-latest (release)
