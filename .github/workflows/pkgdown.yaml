@@ -114,6 +114,38 @@ jobs:
                  "this workflow later.")
         shell: Rscript {0}
 
+      - name: Diagnose rgeneric subprocess linking
+        continue-on-error: true
+        run: |
+          echo "===== R version ====="
+          Rscript -e 'cat(R.version.string, "\n"); cat("R_HOME:", R.home(), "\n")'
+          echo "===== INLA package dir ====="
+          inla_dir=$(Rscript -e 'cat(system.file(package="INLA"))')
+          echo "INLA at: $inla_dir"
+          echo "===== any libR.so shipped inside INLA? ====="
+          find "$inla_dir" \( -name 'libR*.so*' -o -name 'libR*.dylib' \) 2>/dev/null | head -20
+          echo "  (empty above means INLA ships no libR)"
+          echo "===== INLA bin dir contents ====="
+          ls -la "$inla_dir/bin/linux/64bit/" 2>/dev/null | head -40
+          echo "===== shared libs bundled by INLA (first 40) ====="
+          find "$inla_dir/bin" -name '*.so*' 2>/dev/null | head -40
+          echo "===== what grDevices.so actually needs ====="
+          grdev=$(Rscript -e 'cat(file.path(R.home("library"),"grDevices","libs","grDevices.so"))')
+          echo "grDevices.so: $grdev"
+          ldd "$grdev" 2>&1 | head -20
+          echo "===== is utf8clen present in the system libR? ====="
+          libr=$(Rscript -e 'cat(file.path(R.home("lib"),"libR.so"))')
+          echo "libR.so: $libr"
+          nm -D --defined-only "$libr" 2>/dev/null | grep -c utf8clen || echo "  nm found 0 (or nm unavailable)"
+          echo "===== LD_LIBRARY_PATH as seen by the workflow ====="
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+          echo "===== INLA options and env ====="
+          Rscript -e '
+            library(INLA)
+            cat("inla.call:", INLA::inla.getOption("inla.call"), "\n")
+            print(Sys.getenv(c("LD_LIBRARY_PATH","R_HOME","R_LIBS","R_LIBS_USER")))
+          ' 2>&1 | head -40
+
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
