@@ -22,9 +22,9 @@ jobs:
           # INLA's rgeneric subprocess crashes under R 4.5.x (utf8clen ABI
           # mismatch), so pin to 4.4 which works. The extra
           # ubuntu-devel job runs the CRAN-forward "INLA absent" path.
-          - {os: macos-latest,   r: '4.4', inla: true}
-          - {os: windows-latest, r: '4.4', inla: true}
-          - {os: ubuntu-latest,  r: '4.4', inla: true}
+          - {os: macos-latest,   r: '4.4.2', inla: true}
+          - {os: windows-latest, r: '4.4.2', inla: true}
+          - {os: ubuntu-latest,  r: '4.4.2', inla: true}
           - {os: ubuntu-latest,  r: 'devel', inla: false, http-user-agent: 'release'}
 
     env:

@@ -25,7 +25,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.4'          # INLA's rgeneric subprocess crashes under R 4.5.x (utf8clen ABI mismatch); 4.4 works
+          r-version: '4.4.2'          # INLA's rgeneric subprocess crashes under R 4.5.x (utf8clen ABI mismatch); 4.4 works
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
