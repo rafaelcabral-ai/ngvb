@@ -19,8 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # INLA's rgeneric subprocess crashes under R 4.5.x (utf8clen ABI
-          # mismatch), so pin to 4.4 which works. The extra
+          # Pinned to the maintainer's local R. INLA ships binaries for
+          # 4.3/4.4/4.5. The extra
           # ubuntu-devel job runs the CRAN-forward "INLA absent" path.
           - {os: macos-latest,   r: '4.4.2', inla: true}
           - {os: windows-latest, r: '4.4.2', inla: true}

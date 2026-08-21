@@ -25,7 +25,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.4.2'          # INLA's rgeneric subprocess crashes under R 4.5.x (utf8clen ABI mismatch); 4.4 works
+          r-version: '4.4.2'          # matches the maintainer's local R; see the libR step below for the rgeneric fix
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
@@ -114,37 +114,49 @@ jobs:
                  "this workflow later.")
         shell: Rscript {0}
 
-      - name: Diagnose rgeneric subprocess linking
-        continue-on-error: true
+      # INLA bundles its own libR.so, and its inla.*.run wrapper puts that
+      # directory on LD_LIBRARY_PATH. When the inla binary spawns R to evaluate
+      # an rgeneric model, that subprocess loads grDevices.so, whose NEEDED
+      # libR.so then resolves to INLA's bundled copy rather than the running R.
+      # That copy predates the R we run here and lacks utf8clen, which is the
+      # "undefined symbol: utf8clen" every ngvb() call died on. Point the
+      # bundled name at the real library so both the inla binary and the
+      # subprocess get a libR that matches the R in use.
+      - name: Make INLA's bundled libR match the running R
         run: |
-          echo "===== R version ====="
-          Rscript -e 'cat(R.version.string, "\n"); cat("R_HOME:", R.home(), "\n")'
-          echo "===== INLA package dir ====="
+          set -u
           inla_dir=$(Rscript -e 'cat(system.file(package="INLA"))')
-          echo "INLA at: $inla_dir"
-          echo "===== any libR.so shipped inside INLA? ====="
-          find "$inla_dir" \( -name 'libR*.so*' -o -name 'libR*.dylib' \) 2>/dev/null | head -20
-          echo "  (empty above means INLA ships no libR)"
-          echo "===== INLA bin dir contents ====="
-          ls -la "$inla_dir/bin/linux/64bit/" 2>/dev/null | head -40
-          echo "===== shared libs bundled by INLA (first 40) ====="
-          find "$inla_dir/bin" -name '*.so*' 2>/dev/null | head -40
-          echo "===== what grDevices.so actually needs ====="
-          grdev=$(Rscript -e 'cat(file.path(R.home("library"),"grDevices","libs","grDevices.so"))')
-          echo "grDevices.so: $grdev"
-          ldd "$grdev" 2>&1 | head -20
-          echo "===== is utf8clen present in the system libR? ====="
-          libr=$(Rscript -e 'cat(file.path(R.home("lib"),"libR.so"))')
-          echo "libR.so: $libr"
-          nm -D --defined-only "$libr" 2>/dev/null | grep -c utf8clen || echo "  nm found 0 (or nm unavailable)"
-          echo "===== LD_LIBRARY_PATH as seen by the workflow ====="
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-          echo "===== INLA options and env ====="
+          bin="$inla_dir/bin/linux/64bit"
+          real_libR=$(Rscript -e 'cat(file.path(R.home("lib"), "libR.so"))')
+
+          echo "--- inla.mkl.run wrapper (how LD_LIBRARY_PATH is built) ---"
+          cat "$bin/inla.mkl.run" || true
+
+          echo "--- does the inla binary itself need libR? ---"
+          ldd "$bin/inla.mkl" 2>&1 | grep -i 'libR' || echo "  (inla.mkl does not link libR)"
+
+          echo "--- repointing bundled libR.so -> $real_libR ---"
+          if [ ! -f "$real_libR" ]; then
+            echo "real libR.so not found; leaving INLA untouched"; exit 0
+          fi
+          if [ -f "$bin/libR.so" ] && [ ! -L "$bin/libR.so" ]; then
+            mv -v "$bin/libR.so" "$bin/libR.so.bundled-unused"
+          fi
+          ln -sfn "$real_libR" "$bin/libR.so"
+          ls -la "$bin/libR.so"
+
+          echo "--- minimal rgeneric smoke test ---"
           Rscript -e '
-            library(INLA)
-            cat("inla.call:", INLA::inla.getOption("inla.call"), "\n")
-            print(Sys.getenv(c("LD_LIBRARY_PATH","R_HOME","R_LIBS","R_LIBS_USER")))
-          ' 2>&1 | head -40
+            n <- 30; set.seed(1)
+            d <- data.frame(y = rnorm(n), i = seq_len(n))
+            rgen <- INLA::inla.rgeneric.define(INLA::inla.rgeneric.ar1.model, n = n)
+            r <- try(INLA::inla(y ~ -1 + f(i, model = rgen), data = d), silent = TRUE)
+            if (inherits(r, "try-error")) {
+              cat("RGENERIC STILL BROKEN:\n", conditionMessage(attr(r, "condition")), "\n")
+              quit(status = 1)
+            }
+            cat("RGENERIC OK\n")
+          '
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
