@@ -1,6 +1,7 @@
 # Get started with ngvb
 
 ``` r
+
 library(ngvb)
 library(ggplot2)
 library(INLA)     # ngvb uses INLA as a backend; attach it to call inla() directly
@@ -128,6 +129,7 @@ with a warning.
 `jumpts` is a series that is smooth apart from two abrupt jumps.
 
 ``` r
+
 ggplot(jumpts, aes(x, y)) +
   geom_line(colour = "grey70") +
   geom_point(colour = "grey30", size = 1.3) +
@@ -148,6 +150,7 @@ increment to share the same variance, so it cannot tell a jump from
 ordinary noise. Fit it with INLA:
 
 ``` r
+
 LGM <- inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
             control.compute = list(config = TRUE))
 ```
@@ -155,6 +158,7 @@ LGM <- inla(y ~ -1 + f(x, model = "rw1"), data = jumpts,
 Now check whether the latent Gaussian assumption holds:
 
 ``` r
+
 check <- ng.check(LGM, compute.fixed = FALSE)
 ```
 
@@ -176,9 +180,10 @@ Now we extend it to non-Gaussianity. The model is auto-detected, so this
 is a single call:
 
 ``` r
+
 LnGM <- ngvb(LGM)
 #> Components: x [rw1]
-#> ngvb: converged after 24 iteration(s);  E[eta] = 3.748
+#> ngvb: converged after 24 iteration(s);  E[eta] = 3.742
 plot(LnGM)
 ```
 
@@ -203,32 +208,33 @@ model, and, pooled with importance weights, posterior summaries of
 anything the underlying inla() fit reports:
 
 ``` r
+
 samples <- ngvb_sample(LnGM, n.samples = 30)
 bayes.factor(samples)               # LnGM vs. LGM marginal-likelihood ratio
-#> Bayes factor (non-Gaussian vs Gaussian): 8.32e+23
-#>   log10 BF = 23.92  (decisive)
-#>   weight ESS = 2.1 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 9.96e+23
+#>   log10 BF = 24.00  (decisive)
+#>   weight ESS = 2.2 of 30 draws
 summary(samples)                    # importance-weighted summaries, V integrated out
 #> Latent non-Gaussian model, V integrated out over 30 draws
-#> Bayes factor vs Gaussian model: 8.32e+23 (log10 = 23.92), weight ESS 2.1
+#> Bayes factor vs Gaussian model: 9.96e+23 (log10 = 24.00), weight ESS 2.2
 #> 
 #> Fixed effects:
 #>   (none)
 #> 
 #> Hyperparameters:
-#>                                              mean        sd
-#> Precision for the Gaussian observations 9760.4055 23400.414
-#> Theta1 for x                               1.8318     0.456
+#>                                              mean         sd
+#> Precision for the Gaussian observations 3588.3315 13688.8103
+#> Theta1 for x                               2.1162     0.4493
 #> 
 #> Random effects:
 #>   $x (100 nodes)
 #>   ID    mean     sd
-#> 1  1 -0.8562 0.1148
-#> 2  2 -0.6559 0.1072
-#> 3  3 -0.7167 0.1038
-#> 4  4 -0.6851 0.1102
-#> 5  5 -0.9215 0.1185
-#> 6  6 -0.6487 0.1278
+#> 1  1 -0.8755 0.1419
+#> 2  2 -0.6634 0.1094
+#> 3  3 -0.7070 0.0956
+#> 4  4 -0.6998 0.0999
+#> 5  5 -0.8781 0.1213
+#> 6  6 -0.7240 0.1306
 #>   ... 94 more row(s); use what = "random" to print in full
 ```
 

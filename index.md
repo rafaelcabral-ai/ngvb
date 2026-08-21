@@ -29,6 +29,7 @@ the LnGM model predicts higher pressure).
 ## Usage
 
 ``` r
+
 LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = TRUE))
 
 ng.check(LGM)       # is the latent Gaussian assumption adequate? which posterior summaries are most sensitive? 
@@ -45,6 +46,7 @@ summary(samples)                    # summary of random effects + fixed effects 
 so install it first:
 
 ``` r
+
 install.packages("INLA",
   repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/stable"),
   dep = TRUE)

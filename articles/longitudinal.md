@@ -1,6 +1,7 @@
 # Random intercepts and slopes
 
 ``` r
+
 library(ngvb)
 library(ggplot2)
 library(INLA)
@@ -11,6 +12,7 @@ together with a sex indicator and time coded two ways. A quick look at
 the raw data frame:
 
 ``` r
+
 Orthodont$age <- c(8, 10, 12, 14)[Orthodont$time + 1]
 
 ggplot(Orthodont, aes(x = age, y = value)) +
@@ -41,6 +43,7 @@ with $`a_k \sim N(0, 1/\tau_a)`$ and $`b_k \sim N(0, 1/\tau_b)`$ across
 children.
 
 ``` r
+
 formula <- value ~ 1 + Female + time + tF +
   f(subject,  model = "iid") +      # random intercept, one per child
   f(subject2, time, model = "iid")  # random slope, one per child
@@ -59,6 +62,7 @@ typical children and lets the few outliers stand out.
 reports one diagnostic per component:
 
 ``` r
+
 ng.check(LGM, compute.fixed = FALSE)
 ```
 
@@ -70,9 +74,10 @@ We see that no substantial evidence of non-Gaussianity was found (large
 $`p`$) for both random effects.
 
 ``` r
+
 LnGM <- ngvb(LGM)
 #> Components: subject [iid], subject2 [iid]
-#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.318, 0.128
+#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.129, 0.203
 plot(LnGM)
 ```
 
@@ -85,8 +90,9 @@ carries more non-Gaussianity than the slope. A couple of children have
 outlying baselines, while the growth rates are close to Gaussian.
 
 ``` r
+
 bayes.factor(LnGM, n.samples = 30, seed = 1)
-#> Bayes factor (non-Gaussian vs Gaussian): 1.26
-#>   log10 BF = 0.10  (weak/none)
-#>   weight ESS = 25.7 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 1.04e+06
+#>   log10 BF = 6.02  (decisive)
+#>   weight ESS = 4.6 of 30 draws
 ```

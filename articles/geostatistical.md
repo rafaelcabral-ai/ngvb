@@ -1,6 +1,7 @@
 # Geostatistical data: a Matern (SPDE) field
 
 ``` r
+
 library(ngvb)
 library(ggplot2)
 library(INLA)
@@ -11,6 +12,7 @@ the Pacific Northwest. Build the mesh first and plot the stations over
 it:
 
 ``` r
+
 w    <- read.csv(system.file("extdata", "weatherdata.csv", package = "ngvb"))
 mesh <- inla.mesh.2d(loc = w[, c("lon", "lat")], max.edge = c(1.5, 2.5),
                      cutoff = 0.3, max.n.strict = 400)
@@ -33,6 +35,7 @@ reads $`\mathbf D`$ straight from the fitted `spde` object, so you pass
 nothing extra.
 
 ``` r
+
 spde <- inla.spde2.pcmatern(mesh, alpha = 2,
                             prior.range = c(1, 0.5),    # P(range < 1) = 0.5
                             prior.sigma = c(10, 0.1))   # P(sigma > 1) = 0.01
@@ -46,6 +49,7 @@ LGM <- inla(y ~ -1 + f(s, model = spde), data = inla.stack.data(stk),
 ```
 
 ``` r
+
 chk <- ng.check(LGM, compute.random = TRUE)
 ```
 
@@ -70,6 +74,7 @@ the non-Gaussian model, we can already map where its predictions are
 expected to move the most:
 
 ``` r
+
 nodes.sens <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2], sens = chk$sens.random$s)
 geo.plot(nodes.sens, mesh = mesh, title = "sensitivity of posterior mean", palette = "RdBu")
 ```
@@ -86,9 +91,10 @@ mean of the latent field will take larger values once we fit the
 non-Gaussian model.
 
 ``` r
+
 LnGM <- ngvb(LGM)
 #> Components: s [spde]
-#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.083
+#> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.097
 plot(LnGM)
 ```
 
@@ -103,6 +109,7 @@ SPDE the weights $`h_i`$ are the mesh mass, so $`V_i/h_i`$ rather than
 $`V_i`$ is the quantity to look at):
 
 ``` r
+
 nodes <- data.frame(lon = mesh$loc[, 1], lat = mesh$loc[, 2],
                     Vh = LnGM$V$s / LnGM$h$s)
 geo.plot(nodes, mesh = mesh, title = "V/h")
@@ -113,11 +120,12 @@ the domain and elevated at a few
 locations.](geostatistical_files/figure-html/spde-map-1.png)
 
 ``` r
+
 samples <- ngvb_sample(LnGM, n.samples = 30, seed = 1)
 bayes.factor(samples)
-#> Bayes factor (non-Gaussian vs Gaussian): 33.2
-#>   log10 BF = 1.52  (strong)
-#>   weight ESS = 17.8 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 55.4
+#>   log10 BF = 1.74  (strong)
+#>   weight ESS = 18.3 of 30 draws
 ```
 
 [`ngvb_sample()`](https://rafaelcabral-ai.github.io/ngvb/reference/ngvb_sample.md)
@@ -127,6 +135,7 @@ sensitivity preview above against the actual before/after change in the
 posterior mean:
 
 ``` r
+
 post    <- summary(samples, verbose = FALSE)
 
 diff <- post$random$s$mean - LGM$summary.random$s$mean
@@ -143,11 +152,12 @@ correlates with the actual change in magnitude, and among the handful of
 nodes it flags as most sensitive the direction agrees too:
 
 ``` r
+
 cat(sprintf("correlation(sensitivity, actual change) = %.2f\n",
             cor(chk$sens.random$s, diff)))
-#> correlation(sensitivity, actual change) = 0.76
+#> correlation(sensitivity, actual change) = 0.49
 top10 <- order(-abs(chk$sens.random$s))[1:20]
 cat(sprintf("sign agreement among the 20 most sensitive nodes: %.0f%%\n",
             100 * mean(sign(chk$sens.random$s[top10]) == sign(diff[top10]))))
-#> sign agreement among the 20 most sensitive nodes: 100%
+#> sign agreement among the 20 most sensitive nodes: 85%
 ```

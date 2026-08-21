@@ -1,6 +1,7 @@
 # Custom models: your own precision matrix
 
 ``` r
+
 library(ngvb)
 library(INLA)
 ```
@@ -41,6 +42,7 @@ We reuse the Columbus burglary data from [Areal
 data](https://rafaelcabral-ai.github.io/ngvb/articles/areal.md):
 
 ``` r
+
 library(sf); library(spdep)
 map  <- st_read(system.file("shapes/columbus.gpkg", package = "spData"), quiet = TRUE)
 d    <- st_drop_geometry(map[, c("CRIME", "HOVAL", "INC")])
@@ -53,6 +55,7 @@ Here is the full definition, and each argument is explained just below
 it.
 
 ``` r
+
 W      <- Matrix::Diagonal(x = 1 / rowSums(Wadj)) %*% Wadj    # row-standardise
 N      <- nrow(W)
 eigenv <- Re(eigen(as.matrix(W), only.values = TRUE)$values)
@@ -125,6 +128,7 @@ With the operator defined, fit the Gaussian SAR through the same engine
 and then extend it:
 
 ``` r
+
 LGM  <- inla(CRIME ~ 1 + HOVAL + INC + f(s, model = ngvb_rgeneric(op_sar)),
              data = d, control.compute = list(config = TRUE))
 LnGM <- ngvb(LGM, components = list(s = op_sar), verbose = FALSE)
@@ -141,6 +145,7 @@ reddest counties are where the model added the most flexibility, meaning
 the largest local departures from the smooth spatial field:
 
 ``` r
+
 areal.plot(map, LnGM$V$s, title = "V")
 ```
 
@@ -149,10 +154,11 @@ counties, with the reddest counties marking the largest local
 departures.](custom-models_files/figure-html/sar-map-1.png)
 
 ``` r
+
 bayes.factor(LnGM, n.samples = 30, seed = 1)
-#> Bayes factor (non-Gaussian vs Gaussian): 8.23
-#>   log10 BF = 0.92  (substantial)
-#>   weight ESS = 17.7 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 8.53
+#>   log10 BF = 0.93  (substantial)
+#>   weight ESS = 24.8 of 30 draws
 ```
 
 That is the whole custom interface. Give
@@ -172,6 +178,7 @@ D you need, as a function of a hyperparameter, and $`h`$. For an AR(1)
 field, for example:
 
 ``` r
+
 ngme_ar1 <- ngme2::ar1(1:100)
 
 op_ar1_ngme2 <- ngvb_custom(

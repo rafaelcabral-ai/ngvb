@@ -5,6 +5,7 @@ whether the latent Gaussian assumption is adequate, and extends it to a
 latent *non-Gaussian* model (LnGM), each in one line:
 
 ``` r
+
 LGM <- inla(y ~ f(s, model = "rw1"), data = d, control.compute = list(config = TRUE))
 
 ng.check(LGM)       # is the latent Gaussian assumption adequate, and where not?
@@ -48,6 +49,7 @@ The full function reference is at
 ## Installing INLA
 
 ``` r
+
 install.packages("INLA",
   repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/stable"),
   dep = TRUE)

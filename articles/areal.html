@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Areal data: an intrinsic model (besag) • ngvb</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -71,7 +71,7 @@
       <h1>Areal data: an intrinsic model (besag)</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/rafaelcabral-ai/ngvb/blob/HEAD/vignettes/articles/areal.Rmd" class="external-link"><code>vignettes/articles/areal.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/rafaelcabral-ai/ngvb/blob/master/vignettes/articles/areal.Rmd" class="external-link"><code>vignettes/articles/areal.Rmd</code></a></small>
       <div class="d-none name"><code>areal.Rmd</code></div>
     </div>
 
@@ -91,7 +91,7 @@ first:</p>
 <p>An intrinsic conditional autoregression (the <code>besag</code>
 model) assumes neighbouring counties are similar, with Gaussian
 differences across the edges of the adjacency graph,
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><msub><mi>x</mi><mi>j</mi></msub><mo>∼</mo><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><mn>1</mn><mi>/</mi><mi>τ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="1.0em"></mspace><mrow><mtext mathvariant="normal">for each edge </mtext><mspace width="0.333em"></mspace></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">x_i - x_j \sim N(0,\,1/\tau)\quad\text{for each edge }(i,j).</annotation></semantics></math>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><msub><mi>x</mi><mi>j</mi></msub><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><mn>1</mn><mi>/</mi><mi>τ</mi><mo stretchy="false" form="postfix">)</mo><mspace width="1.0em"></mspace><mrow><mtext mathvariant="normal">for each edge </mtext><mspace width="0.333em"></mspace></mrow><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">x_i - x_j \sim N(0,\,1/\tau)\quad\text{for each edge }(i,j).</annotation></semantics></math>
 The non-Gaussian version allows a few sharp boundaries between otherwise
 smooth regions. Build the adjacency and fit the Gaussian model:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -106,12 +106,12 @@ smooth regions. Build the adjacency and fit the Gaussian model:</p>
 <span>            data <span class="op">=</span> <span class="va">d</span>, control.compute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>config <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LGM</span><span class="op">$</span><span class="va">summary.hyperpar</span></span>
-<span><span class="co">#&gt;                                                 mean           sd  0.025quant</span></span>
-<span><span class="co">#&gt; Precision for the Gaussian observations  0.008027765 1.652369e-03 0.005214131</span></span>
-<span><span class="co">#&gt; Precision for s                         57.510547844 1.111313e+02 0.334953121</span></span>
-<span><span class="co">#&gt;                                             0.5quant   0.975quant        mode</span></span>
-<span><span class="co">#&gt; Precision for the Gaussian observations  0.007879949   0.01168971 0.007616797</span></span>
-<span><span class="co">#&gt; Precision for s                         20.674046302 328.06502413 0.176212898</span></span></code></pre></div>
+<span><span class="co">#&gt;                                                 mean           sd 0.025quant</span></span>
+<span><span class="co">#&gt; Precision for the Gaussian observations  0.008022714 1.647426e-03 0.00519725</span></span>
+<span><span class="co">#&gt; Precision for s                         57.746536399 1.157551e+02 0.28549464</span></span>
+<span><span class="co">#&gt;                                            0.5quant   0.975quant        mode</span></span>
+<span><span class="co">#&gt; Precision for the Gaussian observations  0.00788201   0.01165272 0.007641854</span></span>
+<span><span class="co">#&gt; Precision for s                         19.78290796 336.00659816 0.125463561</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span>, compute.fixed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>   <span class="co"># areal model auto-detected</span></span></code></pre></div>
 <p><img src="areal_files/figure-html/besag-check-1.png" class="r-plt" alt="Diagnostic for the intrinsic CAR: similar small sensitivities across all graph edges, with the observed total well inside its Gaussian reference." width="768" style="display: block; margin: auto;"></p>
@@ -127,9 +127,9 @@ latent non-Gaussian fitting (<code>ngvb</code>) show that.</p>
 <p><img src="areal_files/figure-html/besag-fit-1.png" class="r-plt" alt="ngvb fit summary for the besag component: edge mixing weights near one and the non-Gaussianity parameter shrinking toward zero." width="768" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 0.797</span></span>
-<span><span class="co">#&gt;   log10 BF = -0.10  (weak/none)</span></span>
-<span><span class="co">#&gt;   weight ESS = 23.9 of 30 draws</span></span></code></pre></div>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 1.09</span></span>
+<span><span class="co">#&gt;   log10 BF = 0.04  (weak/none)</span></span>
+<span><span class="co">#&gt;   weight ESS = 25.8 of 30 draws</span></span></code></pre></div>
 <p>The intrinsic besag effect puts its mixing variables on the
 <em>edges</em> of the graph rather than on the counties, so they cannot
 be mapped directly. The simultaneous autoregression, built by hand in <a href="custom-models.html">Custom models</a>, places them on the counties
@@ -144,7 +144,7 @@ instead and can be mapped.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Get started with ngvb • ngvb</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -71,7 +71,7 @@
       <h1>Get started with ngvb</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/rafaelcabral-ai/ngvb/blob/HEAD/vignettes/articles/ngvb.Rmd" class="external-link"><code>vignettes/articles/ngvb.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/rafaelcabral-ai/ngvb/blob/master/vignettes/articles/ngvb.Rmd" class="external-link"><code>vignettes/articles/ngvb.Rmd</code></a></small>
       <div class="d-none name"><code>ngvb.Rmd</code></div>
     </div>
 
@@ -114,24 +114,24 @@ Gaussian assumption, and where.</li>
 <p>Every LGM writes its latent field
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐱</mi><annotation encoding="application/x-tex">\mathbf x</annotation></semantics></math>
 through a model-specific dependency matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)</annotation></semantics></math>
 that turns
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐱</mi><annotation encoding="application/x-tex">\mathbf x</annotation></semantics></math>
 into independent Gaussian increments,
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.167em"></mspace><mi>𝐱</mi><mspace width="0.278em"></mspace><mover><mo>=</mo><mi>d</mi></mover><mspace width="0.278em"></mspace><mi>𝚲</mi><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>Λ</mi><mi>i</mi></msub><mo>∼</mo><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><msub><mi>h</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)\,\mathbf x \;\overset{d}{=}\; \boldsymbol\Lambda,
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>𝐱</mi><mspace width="0.278em"></mspace><mover><mo>=</mo><mi>d</mi></mover><mspace width="0.278em"></mspace><mi>𝚲</mi><mo>,</mo><mspace width="2.0em"></mspace><msub><mi mathvariant="normal">Λ</mi><mi>i</mi></msub><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><msub><mi>h</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)\,\mathbf x \;\overset{d}{=}\; \boldsymbol\Lambda,
 \qquad \Lambda_i \sim N(0,\,h_i).</annotation></semantics></math> For a
 random walk
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Λ</mi><mi>i</mi></msub><mo>=</mo><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\Lambda_i=x_{i}-x_{i-1}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">Λ</mi><mi>i</mi></msub><mo>=</mo><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\Lambda_i=x_{i}-x_{i-1}</annotation></semantics></math>,
 for an autoregression
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Λ</mi><mi>i</mi></msub><mo>=</mo><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><mi>ρ</mi><msub><mi>x</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\Lambda_i=x_i-\rho x_{i-1}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">Λ</mi><mi>i</mi></msub><mo>=</mo><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><mi>ρ</mi><msub><mi>x</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\Lambda_i=x_i-\rho x_{i-1}</annotation></semantics></math>,
 and so on. Equivalently, the Gaussian field has precision
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>𝐃</mi><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>⊤</mi></msup><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐡</mi><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.167em"></mspace><mi>𝐃</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathbf Q(\boldsymbol\theta)=\mathbf D(\boldsymbol\theta)^\top\mathrm{diag}(1/\mathbf h)\,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><msup><mo stretchy="false" form="postfix">)</mo><mi>⊤</mi></msup><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐡</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathbf Q(\boldsymbol\theta)=\mathbf D(\boldsymbol\theta)^\top\mathrm{diag}(1/\mathbf h)\,
 \mathbf D(\boldsymbol\theta)</annotation></semantics></math>. The
 non-Gaussian model keeps the same
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐃</mi><annotation encoding="application/x-tex">\mathbf D</annotation></semantics></math>
 but lets each increment have its own variance
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>V</mi><mi>i</mi></msub><annotation encoding="application/x-tex">V_i</annotation></semantics></math>,
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Λ</mi><mi>i</mi></msub><mo>∣</mo><msub><mi>V</mi><mi>i</mi></msub><mo>∼</mo><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>V</mi><mi>i</mi></msub><mo>∼</mo><mrow><mi mathvariant="normal">I</mi><mi mathvariant="normal">G</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>h</mi><mi>i</mi></msub><mo>,</mo><mspace width="0.167em"></mspace><msup><mi>η</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><msubsup><mi>h</mi><mi>i</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo><mspace width="2.0em"></mspace><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><msub><mi>h</mi><mi>i</mi></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">\Lambda_i \mid V_i \sim N(0,\,V_i),\qquad
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">Λ</mi><mi>i</mi></msub><mo>∣</mo><msub><mi>V</mi><mi>i</mi></msub><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>V</mi><mi>i</mi></msub><mo>∼</mo><mrow><mi mathvariant="normal">I</mi><mi mathvariant="normal">G</mi></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>h</mi><mi>i</mi></msub><mo>,</mo><mspace width="0.167em"></mspace><msup><mi>η</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><msubsup><mi>h</mi><mi>i</mi><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><mi>E</mi><mo stretchy="false" form="prefix">[</mo><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">]</mo><mo>=</mo><msub><mi>h</mi><mi>i</mi></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">\Lambda_i \mid V_i \sim N(0,\,V_i),\qquad
   V_i \sim \mathrm{IG}(h_i,\,\eta^{-1}h_i^2),\qquad E[V_i]=h_i .</annotation></semantics></math>
 The mixing variables
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐕</mi><annotation encoding="application/x-tex">\mathbf V</annotation></semantics></math>
@@ -151,7 +151,7 @@ and
 is exactly the Gaussian model. Conditional on
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐕</mi><annotation encoding="application/x-tex">\mathbf V</annotation></semantics></math>
 the field is still Gaussian, with precision
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo>,</mo><mi>𝐕</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>𝐃</mi><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>⊤</mi></msup><mspace width="0.167em"></mspace><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐕</mi><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.167em"></mspace><mi>𝐃</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\mathbf Q(\boldsymbol\theta,\mathbf V)=\mathbf D(\boldsymbol\theta)^\top\,
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo>,</mo><mi>𝐕</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><msup><mo stretchy="false" form="postfix">)</mo><mi>⊤</mi></msup><mspace width="0.167em"></mspace><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐕</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">\mathbf Q(\boldsymbol\theta,\mathbf V)=\mathbf D(\boldsymbol\theta)^\top\,
    \mathrm{diag}(1/\mathbf V)\,\mathbf D(\boldsymbol\theta).</annotation></semantics></math><code>ngvb</code> fits the model with a short variational-Bayes loop
 that repeatedly calls INLA with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐕</mi><annotation encoding="application/x-tex">\mathbf V</annotation></semantics></math>
@@ -169,9 +169,9 @@ its place. Increase <code>alpha.eta</code> for stronger shrinkage.</p>
 <p>Two variational algorithms are available. The default,
 <code>method = "SVI"</code>, is a structured mean-field scheme that
 updates
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐕</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">q(\mathbf V)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐕</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">q(\mathbf V)</annotation></semantics></math>
 and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>η</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">q(\eta)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">q(\eta)</annotation></semantics></math>
 in turn, and it is the more reliable choice. The alternative,
 <code>method = "SCVI"</code>, integrates
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐕</mi><annotation encoding="application/x-tex">\mathbf V</annotation></semantics></math>
@@ -202,7 +202,7 @@ independent noise, so it has the dependency matrix
 the method needs.</p>
 <p><strong>Added by hand.</strong> Some models are not auto-detected but
 are still described by
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.167em"></mspace><mi>𝐱</mi><mspace width="0.278em"></mspace><mover><mo>=</mo><mi>d</mi></mover><mspace width="0.278em"></mspace><mi>𝚲</mi></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)\,\mathbf x \;\overset{d}{=}\; \boldsymbol\Lambda</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>𝐱</mi><mspace width="0.278em"></mspace><mover><mo>=</mo><mi>d</mi></mover><mspace width="0.278em"></mspace><mi>𝚲</mi></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)\,\mathbf x \;\overset{d}{=}\; \boldsymbol\Lambda</annotation></semantics></math>,
 so you can build them with <code><a href="../reference/ngvb_operator.html">ngvb_operator()</a></code> which expects
 the matrix
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐃</mi><annotation encoding="application/x-tex">\mathbf D</annotation></semantics></math>,
@@ -246,7 +246,7 @@ jumps.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/rw1-data-1.png" class="r-plt" alt="The jumpts series: a smooth trend broken by two abrupt vertical jumps." width="768" style="display: block; margin: auto;"></p>
 <p>A first-order random walk models the series through its increments,
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>∼</mo><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><mn>1</mn><mi>/</mi><mi>τ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">x_i - x_{i-1} \sim N(0,\,1/\tau),</annotation></semantics></math>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mspace width="0.167em"></mspace><mn>1</mn><mi>/</mi><mi>τ</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">x_i - x_{i-1} \sim N(0,\,1/\tau),</annotation></semantics></math>
 which is the operator
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo>=</mo><msqrt><mi>τ</mi></msqrt><mspace width="0.167em"></mspace><msub><mi>𝐃</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\mathbf D = \sqrt{\tau}\,\mathbf D_0</annotation></semantics></math>
 with
@@ -262,7 +262,7 @@ Fit it with INLA:</p>
 <code class="sourceCode R"><span><span class="va">check</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ng.check.html">ng.check</a></span><span class="op">(</span><span class="va">LGM</span>, compute.fixed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/rw1-check-1.png" class="r-plt" alt="Diagnostic for the RW1 fit: per-index sensitivity spiking at the two jumps, and the observed overall sensitivity far in the tail of its Gaussian reference distribution." width="768" style="display: block; margin: auto;"></p>
 <p>The left panel is the per-index sensitivity
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>i</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">d_i(y)</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">d_i(y)</annotation></semantics></math>,
 which measures how much the evidence would improve if increment
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
 were allowed to be non-Gaussian. It spikes at the two jumps. The right
@@ -278,19 +278,19 @@ this is a single call:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LnGM</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb.html">ngvb</a></span><span class="op">(</span><span class="va">LGM</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Components: x [rw1]</span></span>
-<span><span class="co">#&gt; ngvb: converged after 24 iteration(s);  E[eta] = 3.748</span></span>
+<span><span class="co">#&gt; ngvb: converged after 24 iteration(s);  E[eta] = 3.742</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">LnGM</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ngvb_files/figure-html/rw1-fit-1.png" class="r-plt" alt="ngvb fit summary: mixing weights inflated at the two jumps and near one elsewhere, the posterior of the non-Gaussianity parameter, and its convergence across iterations." width="768" style="display: block; margin: auto;"></p>
 <p>For each component the plot shows the mixing weights
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>i</mi></msub><mi>/</mi><msub><mi>h</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">V_i/h_i</annotation></semantics></math>
 (the posterior mean with a 90 percent credible interval, and a cross at
 the plug-in value
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mn>1</mn><mi>/</mi><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">1/E[1/V_i]</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mi>E</mi><mo stretchy="false" form="prefix">[</mo><mn>1</mn><mi>/</mi><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">1/E[1/V_i]</annotation></semantics></math>
 that INLA is actually refit with, which sits a little below the mean
 because
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">q(V_i)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">q(V_i)</annotation></semantics></math>
 is right-skewed). The final panel tracks
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>η</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">E[\eta]</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo stretchy="false" form="prefix">[</mo><mi>η</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">E[\eta]</annotation></semantics></math>
 across the iterations. The mixing variables are inflated precisely at
 the two jumps and sit near one elsewhere, so the model bought local
 flexibility exactly where it was needed and stayed Gaussian in between.
@@ -303,33 +303,33 @@ anything the underlying inla() fit reports:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb_sample.html">ngvb_sample</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span>               <span class="co"># LnGM vs. LGM marginal-likelihood ratio</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 8.32e+23</span></span>
-<span><span class="co">#&gt;   log10 BF = 23.92  (decisive)</span></span>
-<span><span class="co">#&gt;   weight ESS = 2.1 of 30 draws</span></span>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 9.96e+23</span></span>
+<span><span class="co">#&gt;   log10 BF = 24.00  (decisive)</span></span>
+<span><span class="co">#&gt;   weight ESS = 2.2 of 30 draws</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span>                    <span class="co"># importance-weighted summaries, V integrated out</span></span>
 <span><span class="co">#&gt; Latent non-Gaussian model, V integrated out over 30 draws</span></span>
-<span><span class="co">#&gt; Bayes factor vs Gaussian model: 8.32e+23 (log10 = 23.92), weight ESS 2.1</span></span>
+<span><span class="co">#&gt; Bayes factor vs Gaussian model: 9.96e+23 (log10 = 24.00), weight ESS 2.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effects:</span></span>
 <span><span class="co">#&gt;   (none)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Hyperparameters:</span></span>
-<span><span class="co">#&gt;                                              mean        sd</span></span>
-<span><span class="co">#&gt; Precision for the Gaussian observations 9760.4055 23400.414</span></span>
-<span><span class="co">#&gt; Theta1 for x                               1.8318     0.456</span></span>
+<span><span class="co">#&gt;                                              mean         sd</span></span>
+<span><span class="co">#&gt; Precision for the Gaussian observations 3588.3315 13688.8103</span></span>
+<span><span class="co">#&gt; Theta1 for x                               2.1162     0.4493</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Random effects:</span></span>
 <span><span class="co">#&gt;   $x (100 nodes)</span></span>
 <span><span class="co">#&gt;   ID    mean     sd</span></span>
-<span><span class="co">#&gt; 1  1 -0.8562 0.1148</span></span>
-<span><span class="co">#&gt; 2  2 -0.6559 0.1072</span></span>
-<span><span class="co">#&gt; 3  3 -0.7167 0.1038</span></span>
-<span><span class="co">#&gt; 4  4 -0.6851 0.1102</span></span>
-<span><span class="co">#&gt; 5  5 -0.9215 0.1185</span></span>
-<span><span class="co">#&gt; 6  6 -0.6487 0.1278</span></span>
+<span><span class="co">#&gt; 1  1 -0.8755 0.1419</span></span>
+<span><span class="co">#&gt; 2  2 -0.6634 0.1094</span></span>
+<span><span class="co">#&gt; 3  3 -0.7070 0.0956</span></span>
+<span><span class="co">#&gt; 4  4 -0.6998 0.0999</span></span>
+<span><span class="co">#&gt; 5  5 -0.8781 0.1213</span></span>
+<span><span class="co">#&gt; 6  6 -0.7240 0.1306</span></span>
 <span><span class="co">#&gt;   ... 94 more row(s); use what = "random" to print in full</span></span></code></pre></div>
 <p>On the usual scale a
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mo>log</mo><mn>10</mn></msub><annotation encoding="application/x-tex">\log_{10}</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mn>10</mn></msub><annotation encoding="application/x-tex">\log_{10}</annotation></semantics></math>
 Bayes factor above
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.5</mn><annotation encoding="application/x-tex">0.5</annotation></semantics></math>,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math>,
@@ -372,7 +372,7 @@ ready-made operators from the <code>ngme2</code> package.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

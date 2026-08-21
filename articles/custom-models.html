@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Custom models: your own precision matrix • ngvb</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -71,7 +71,7 @@
       <h1>Custom models: your own precision matrix</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/rafaelcabral-ai/ngvb/blob/HEAD/vignettes/articles/custom-models.Rmd" class="external-link"><code>vignettes/articles/custom-models.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/rafaelcabral-ai/ngvb/blob/master/vignettes/articles/custom-models.Rmd" class="external-link"><code>vignettes/articles/custom-models.Rmd</code></a></small>
       <div class="d-none name"><code>custom-models.Rmd</code></div>
     </div>
 
@@ -81,16 +81,16 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rafaelcabral-ai/ngvb" class="external-link">ngvb</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">INLA</span><span class="op">)</span></span></code></pre></div>
 <p>If a model is not built in, you can supply the dependency matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)</annotation></semantics></math>
 and the constant vector
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐡</mi><annotation encoding="application/x-tex">\mathbf h</annotation></semantics></math>
 yourself with <code><a href="../reference/ngvb_custom.html">ngvb_custom()</a></code>. The engine then forms
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐕</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msup><mi>𝐃</mi><mi>⊤</mi></msup><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐕</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>𝐃</mi></mrow><annotation encoding="application/x-tex">\mathbf Q(\mathbf V)=\mathbf D^\top\mathrm{diag}(1/\mathbf V)\mathbf D</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐕</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msup><mi>𝐃</mi><mi>⊤</mi></msup><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐕</mi><mo stretchy="false" form="postfix">)</mo><mi>𝐃</mi></mrow><annotation encoding="application/x-tex">\mathbf Q(\mathbf V)=\mathbf D^\top\mathrm{diag}(1/\mathbf V)\mathbf D</annotation></semantics></math>,
 owns its normalizing constant, and <code><a href="../reference/ng.check.html">ng.check()</a></code> and
 <code><a href="../reference/ngvb.html">ngvb()</a></code> work exactly as before.</p>
 <p>For areal data the natural custom model is the simultaneous
 autoregression (SAR), which uses
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝐃</mi><mrow><mi mathvariant="normal">S</mi><mi mathvariant="normal">A</mi><mi mathvariant="normal">R</mi></mrow></msub><mo>=</mo><msqrt><mi>τ</mi></msqrt><mspace width="0.167em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐈</mi><mo>−</mo><mi>ρ</mi><mi>𝐖</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo><mspace width="2.0em"></mspace><mrow><mo stretchy="true" form="prefix">|</mo><mi>ρ</mi><mo stretchy="true" form="postfix">|</mo></mrow><mo>&lt;</mo><mn>1</mn><mo>,</mo></mrow><annotation encoding="application/x-tex">\mathbf D_{\mathrm{SAR}}=\sqrt{\tau}\,(\mathbf I-\rho\mathbf W),\qquad |\rho|&lt;1,</annotation></semantics></math>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝐃</mi><mrow><mi mathvariant="normal">S</mi><mi mathvariant="normal">A</mi><mi mathvariant="normal">R</mi></mrow></msub><mo>=</mo><msqrt><mi>τ</mi></msqrt><mspace width="0.167em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>𝐈</mi><mo>−</mo><mi>ρ</mi><mi>𝐖</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><mo stretchy="false" form="prefix">|</mo><mi>ρ</mi><mo stretchy="false" form="prefix">|</mo><mo>&lt;</mo><mn>1</mn><mo>,</mo></mrow><annotation encoding="application/x-tex">\mathbf D_{\mathrm{SAR}}=\sqrt{\tau}\,(\mathbf I-\rho\mathbf W),\qquad |\rho|&lt;1,</annotation></semantics></math>
 with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐖</mi><annotation encoding="application/x-tex">\mathbf W</annotation></semantics></math>
 a row-standardised adjacency. This is worth stressing: among areal
@@ -142,19 +142,19 @@ below it.</p>
 <ul>
 <li>
 <code>D = function(theta)</code> builds the dependency matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐃</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathbf D(\boldsymbol\theta)</annotation></semantics></math>
 as a sparse <code>Matrix</code>. Its rows are the driving-noise terms
 and its columns are the latent nodes. Here <code>theta[1]</code> is the
 log precision and <code>theta[2]</code> is the internal (unconstrained)
 version of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>,
 mapped into
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(0,1)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(0,1)</annotation></semantics></math>
 by the logistic function. INLA works on this internal scale, which is
 why the transform appears inside <code>D</code>.</li>
 <li>
 <code>h</code> is the constant vector with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><msub><mi>h</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">E[V_i]=h_i</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo stretchy="false" form="prefix">[</mo><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">]</mo><mo>=</mo><msub><mi>h</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">E[V_i]=h_i</annotation></semantics></math>,
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>=</mo><mi>h</mi></mrow><annotation encoding="application/x-tex">V=h</annotation></semantics></math>
 recovers the Gaussian model. For a discrete areal model there is one
@@ -169,14 +169,14 @@ change-of-variables Jacobian. This is the piece INLA adds to the
 log-posterior for
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛉</mi><annotation encoding="application/x-tex">\boldsymbol\theta</annotation></semantics></math>.
 In this example there is a
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>3</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">N(0,3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>3</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">N(0,3)</annotation></semantics></math>
 prior on the log precision, and a uniform prior on
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><mo>∈</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\rho\in(0,1)</annotation></semantics></math>;
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><mo>∈</mo><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\rho\in(0,1)</annotation></semantics></math>;
 after the logistic transform the uniform density contributes the
 Jacobian term
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>log</mo><mi>ρ</mi><mo>+</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>ρ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\log\rho + \log(1-\rho)</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>ρ</mi><mo>+</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>ρ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\log\rho + \log(1-\rho)</annotation></semantics></math>.
 If you omit <code>logprior</code>, an independent
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>3</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">N(0,3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>3</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">N(0,3)</annotation></semantics></math>
 on each internal hyperparameter is used.</li>
 <li>
 <code>lognc = function(theta, Vinv)</code> is optional but
@@ -186,14 +186,14 @@ can get close to singular, as it does here when
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>
 approaches one. It returns the log normalizing constant of the
 conditional Gaussian density,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac displaystyle="false"><mn>1</mn><mn>2</mn></mfrac><mo>log</mo><mrow><mo stretchy="true" form="prefix">|</mo><mi>𝐐</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛉</mi><mo>,</mo><mi>𝐕</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">|</mo></mrow><mo>−</mo><mfrac displaystyle="false"><mi>n</mi><mn>2</mn></mfrac><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>2</mn><mi>π</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\tfrac12\log|\mathbf Q(\boldsymbol\theta,\mathbf V)| - \tfrac{n}{2}\log(2\pi)</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">|</mo><mi>𝐐</mi><mo stretchy="false" form="prefix">(</mo><mi>𝛉</mi><mo>,</mo><mi>𝐕</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mstyle displaystyle="false"><mfrac><mi>n</mi><mn>2</mn></mfrac></mstyle><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mn>2</mn><mi>π</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\tfrac12\log|\mathbf Q(\boldsymbol\theta,\mathbf V)| - \tfrac{n}{2}\log(2\pi)</annotation></semantics></math>,
 and it receives <code>Vinv</code>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><mn>1</mn><mi>/</mi><mi>𝐕</mi></mrow><annotation encoding="application/x-tex">=1/\mathbf V</annotation></semantics></math>
 so that the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐕</mi><annotation encoding="application/x-tex">\mathbf V</annotation></semantics></math>-dependent
 part of the determinant is included. For the SAR the log-determinant has
 the closed form
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>log</mo><mi>τ</mi><mo>+</mo><mn>2</mn><msub><mo>∑</mo><mi>i</mi></msub><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>ρ</mi><msub><mi>λ</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mo>∑</mo><mi>i</mi></msub><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mi>/</mi><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">N\log\tau + 2\sum_i\log(1-\rho\lambda_i) + \sum_i\log(1/V_i)</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>τ</mi><mo>+</mo><mn>2</mn><msub><mo>∑</mo><mi>i</mi></msub><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>ρ</mi><msub><mi>λ</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><msub><mo>∑</mo><mi>i</mi></msub><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mi>/</mi><msub><mi>V</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">N\log\tau + 2\sum_i\log(1-\rho\lambda_i) + \sum_i\log(1/V_i)</annotation></semantics></math>,
 using the eigenvalues
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\lambda_i</annotation></semantics></math>
 of
@@ -227,14 +227,14 @@ meaning the largest local departures from the smooth spatial field:</p>
 <p><img src="custom-models_files/figure-html/sar-map-1.png" class="r-plt" alt="Choropleth map of the SAR mixing variables across the Columbus counties, with the reddest counties marking the largest local departures." width="528" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bayes.factor.html">bayes.factor</a></span><span class="op">(</span><span class="va">LnGM</span>, n.samples <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 8.23</span></span>
-<span><span class="co">#&gt;   log10 BF = 0.92  (substantial)</span></span>
-<span><span class="co">#&gt;   weight ESS = 17.7 of 30 draws</span></span></code></pre></div>
+<span><span class="co">#&gt; Bayes factor (non-Gaussian vs Gaussian): 8.53</span></span>
+<span><span class="co">#&gt;   log10 BF = 0.93  (substantial)</span></span>
+<span><span class="co">#&gt;   weight ESS = 24.8 of 30 draws</span></span></code></pre></div>
 <p>That is the whole custom interface. Give <code><a href="../reference/ngvb_custom.html">ngvb_custom()</a></code> a
 function <code>D(theta)</code> and a vector <code>h</code>, optionally a
 prior and a normalizing constant, and any Gaussian model whose precision
 factors as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝐃</mi><mi>⊤</mi></msup><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐡</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>𝐃</mi></mrow><annotation encoding="application/x-tex">\mathbf D^\top\mathrm{diag}(1/\mathbf h)\mathbf D</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝐃</mi><mi>⊤</mi></msup><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">g</mi></mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mi>/</mi><mi>𝐡</mi><mo stretchy="false" form="postfix">)</mo><mi>𝐃</mi></mrow><annotation encoding="application/x-tex">\mathbf D^\top\mathrm{diag}(1/\mathbf h)\mathbf D</annotation></semantics></math>
 becomes a latent non-Gaussian one.</p>
 <div class="section level2">
 <h2 id="using-operators-from-the-ngme2-package">Using operators from the ngme2 package<a class="anchor" aria-label="anchor" href="#using-operators-from-the-ngme2-package"></a>
@@ -243,12 +243,12 @@ becomes a latent non-Gaussian one.</p>
 is a good source of ready-made dependency matrices for models beyond
 ngvb’s own registry (general AR(p), tensor-product and bivariate
 operators among them). Its operator objects expose
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mi>h</mi><mi>e</mi><mi>t</mi><msub><mi>a</mi><mi>K</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">K(theta_K)</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo stretchy="false" form="prefix">(</mo><mi>t</mi><mi>h</mi><mi>e</mi><mi>t</mi><msub><mi>a</mi><mi>K</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">K(theta_K)</annotation></semantics></math>,
 the dependency matrix D you need, as a function of a hyperparameter, and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>h</mi><annotation encoding="application/x-tex">h</annotation></semantics></math>.
 For an AR(1) field, for example:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ngme_ar1</span> <span class="op">&lt;-</span> <span class="fu">ngme2</span><span class="fu">::</span><span class="fu"><a href="https://davidbolin.github.io/ngme2/reference/ar1.html" class="external-link">ar1</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">ngme_ar1</span> <span class="op">&lt;-</span> <span class="fu">ngme2</span><span class="fu">::</span><span class="fu">ar1</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">op_ar1_ngme2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ngvb_custom.html">ngvb_custom</a></span><span class="op">(</span></span>
 <span>  D <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">theta</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">theta</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="va">ngme_ar1</span><span class="op">$</span><span class="fu">update_K</span><span class="op">(</span><span class="va">theta</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span>,</span>
@@ -273,7 +273,7 @@ it.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

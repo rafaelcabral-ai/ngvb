@@ -1,6 +1,7 @@
 # Areal data: an intrinsic model (besag)
 
 ``` r
+
 library(ngvb)
 library(INLA)
 ```
@@ -9,6 +10,7 @@ Residential burglary rates in 49 counties of Columbus, Ohio, come with
 the `spData` package. Plot the response on the map first:
 
 ``` r
+
 library(sf); library(spdep)
 map  <- st_read(system.file("shapes/columbus.gpkg", package = "spData"), quiet = TRUE)
 areal.plot(map, map$CRIME, title = "crime")
@@ -27,6 +29,7 @@ The non-Gaussian version allows a few sharp boundaries between otherwise
 smooth regions. Build the adjacency and fit the Gaussian model:
 
 ``` r
+
 d    <- st_drop_geometry(map[, c("CRIME", "HOVAL", "INC")])
 d$s  <- seq_len(nrow(d))
 nb   <- poly2nb(map)
@@ -39,16 +42,18 @@ LGM <- inla(CRIME ~ 1 + HOVAL + INC +
 ```
 
 ``` r
+
 LGM$summary.hyperpar
-#>                                                 mean           sd  0.025quant
-#> Precision for the Gaussian observations  0.008027765 1.652369e-03 0.005214131
-#> Precision for s                         57.510547844 1.111313e+02 0.334953121
-#>                                             0.5quant   0.975quant        mode
-#> Precision for the Gaussian observations  0.007879949   0.01168971 0.007616797
-#> Precision for s                         20.674046302 328.06502413 0.176212898
+#>                                                 mean           sd 0.025quant
+#> Precision for the Gaussian observations  0.008022714 1.647426e-03 0.00519725
+#> Precision for s                         57.746536399 1.157551e+02 0.28549464
+#>                                            0.5quant   0.975quant        mode
+#> Precision for the Gaussian observations  0.00788201   0.01165272 0.007641854
+#> Precision for s                         19.78290796 336.00659816 0.125463561
 ```
 
 ``` r
+
 ng.check(LGM, compute.fixed = FALSE)   # areal model auto-detected
 ```
 
@@ -62,6 +67,7 @@ previous checking procedure (`ng.check`) and the latent non-Gaussian
 fitting (`ngvb`) show that.
 
 ``` r
+
 LnGM <- ngvb(LGM)
 #> Components: s [car]
 #> ngvb: reached the iteration limit after 30 iteration(s);  E[eta] = 0.073
@@ -73,10 +79,11 @@ and the non-Gaussianity parameter shrinking toward
 zero.](areal_files/figure-html/besag-fit-1.png)
 
 ``` r
+
 bayes.factor(LnGM, n.samples = 30, seed = 1)
-#> Bayes factor (non-Gaussian vs Gaussian): 0.797
-#>   log10 BF = -0.10  (weak/none)
-#>   weight ESS = 23.9 of 30 draws
+#> Bayes factor (non-Gaussian vs Gaussian): 1.09
+#>   log10 BF = 0.04  (weak/none)
+#>   weight ESS = 25.8 of 30 draws
 ```
 
 The intrinsic besag effect puts its mixing variables on the *edges* of

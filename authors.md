@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/rafaelcabral-ai/ngvb/blob/HEAD/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/rafaelcabral-ai/ngvb/blob/master/DESCRIPTION)
 
 Cabral R (2026). *ngvb: Latent Non-Gaussian Modelling with 'INLA' and
 Variational Bayes*. R package version 0.2.0,
