@@ -20,20 +20,25 @@
 #' Find the `model =` expression of the f(<comp>, ...) term in a formula.
 #' @keywords internal
 ngvb_find_f_model <- function(formula, comp.name) {
-  found <- NULL
+  # State lives in an explicit local environment rather than being reached by
+  # superassignment from the inner closure. The effect would be the same here
+  # (`found` is a local of this frame, so it never escapes to .GlobalEnv), but
+  # CRAN flags the superassignment operator on sight.
+  state <- new.env(parent = emptyenv())
+  state$found <- NULL
   walk <- function(e) {
     if (is.call(e)) {
       if (identical(e[[1L]], as.name("f"))) {
         idx <- tryCatch(as.character(e[[2L]]), error = function(...) "")
         al  <- as.list(e)
         if (length(idx) == 1L && idx == comp.name && "model" %in% names(al))
-          found <<- al[["model"]]
+          state$found <- al[["model"]]
       }
       for (i in seq_along(e)) walk(e[[i]])
     }
   }
   walk(formula[[length(formula)]])
-  found
+  state$found
 }
 
 #' Find and evaluate a named argument of the f(<comp>, ...) term in a formula.
@@ -41,19 +46,21 @@ ngvb_find_f_model <- function(formula, comp.name) {
 #' @keywords internal
 ngvb_find_f_arg <- function(fit, comp.name, argname) {
   frm <- fit$.args$formula
-  found <- NULL
+  state <- new.env(parent = emptyenv())   # see ngvb_find_f_model() on the local-state idiom
+  state$found <- NULL
   walk <- function(e) {
     if (is.call(e)) {
       if (identical(e[[1L]], as.name("f"))) {
         al <- as.list(e)
         idx <- tryCatch(as.character(al[[2L]]), error = function(...) "")
         if (length(idx) == 1L && idx == comp.name && argname %in% names(al))
-          found <<- al[[argname]]
+          state$found <- al[[argname]]
       }
       for (i in seq_along(e)) walk(e[[i]])
     }
   }
   walk(frm[[length(frm)]])
+  found <- state$found
   if (is.null(found)) return(NULL)
   tryCatch(eval(found, environment(frm)), error = function(e) NULL)
 }

@@ -138,5 +138,12 @@ plot.ngvb <- function(x, ...) {
 #' Fitted values of the underlying INLA fit.
 #' @param object An `ngvb` object.
 #' @param ... Ignored.
+#' @return The `summary.fitted.values` component of the final INLA fit: a
+#'   `data.frame` with one row per element of the linear predictor, holding the
+#'   posterior summaries of the fitted values. Columns are whichever summaries
+#'   that fit computed, typically `mean`, `sd`, the requested quantiles
+#'   (`0.025quant`, `0.5quant`, `0.975quant`) and `mode`. `NULL` if the fit
+#'   carries no fitted values, which happens when `ngvb()` was given an INLA
+#'   fit run without them.
 #' @export
 fitted.ngvb <- function(object, ...) object$fit$summary.fitted.values

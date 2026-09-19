@@ -1,7 +1,7 @@
 Package: ngvb
 Type: Package
 Title: Latent Non-Gaussian Modelling with 'INLA' and Variational Bayes
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: person("Rafael", "Cabral", email = "rafael.medeiros.cabral@gmail.com",
     role = c("aut", "cre", "cph"))
 Description: Diagnoses whether the latent Gaussian assumption of a model fitted

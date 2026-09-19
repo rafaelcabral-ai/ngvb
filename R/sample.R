@@ -64,9 +64,6 @@ ngvb_sample <- function(object, n.samples = 50, seed = NULL,
   aV <- stats::setNames(lapply(cn.all, function(cn) rep(1 / eta[[cn]], length(h[[cn]]))), cn.all)
   bV <- stats::setNames(lapply(cn.all, function(cn) d[[cn]] + h[[cn]]^2 / eta[[cn]]), cn.all)
 
-  on.exit(suppressWarnings(rm(list = paste0("ngvb.model.", cn.all), envir = globalenv())),
-          add = TRUE)
-
   ## Gaussian model (V = h): marginal likelihood and fit
   fit.LGM  <- object$inla.fit.V(h)
   logm.LGM <- fit.LGM$mlik[1, 1]

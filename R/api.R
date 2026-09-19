@@ -40,9 +40,14 @@ ngvb_make_fit_V <- function(fit, ops, comp.names) {
   arglist <- fit$.args
   arglist$control.compute$config <- TRUE
   rankdef.map <- stats::setNames(lapply(ops, `[[`, "rankdef"), comp.names)
-  ## INLA resolves the formula's `model =` argument (and re-evaluates data) in the
-  ## global environment, so the engine objects must live there (cleaned up by ngvb()).
-  model.env   <- globalenv()
+  ## The engine objects live in a private environment, never in the user's
+  ## workspace (CRAN policy forbids modifying .GlobalEnv). INLA resolves the
+  ## formula's `model =` argument in `.parent.frame`, and `fit$.args` carries
+  ## the one captured from the user's original inla() call -- .GlobalEnv -- so
+  ## point it at our environment or the lookup misses. Its parent is the global
+  ## environment, so anything else the formula references still resolves.
+  model.env   <- new.env(parent = globalenv())
+  arglist$.parent.frame <- model.env
   arglist$formula <- ngvb_swap_formula(arglist$formula, comp.names, rankdef.map, model.env)
   function(V) {
     for (cn in comp.names)
@@ -250,8 +255,6 @@ ngvb <- function(fit, selection = NULL, components = NULL, method = c("SVI", "SC
     selection <- lapply(fit$summary.random, function(x) seq_len(nrow(x)))
   comp.names <- names(selection)
   if (length(comp.names) == 0L) stop("ngvb: no random components found in the fit.")
-  on.exit(suppressWarnings(rm(list = paste0("ngvb.model.", comp.names), envir = globalenv())),
-          add = TRUE)
 
   ops <- stats::setNames(
     lapply(comp.names, function(cn) ngvb_detect_operator(fit, cn, user.op = components[[cn]])),
